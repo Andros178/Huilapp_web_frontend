@@ -2,12 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import CaptusImg from '../../assets/images/carrusel/Captus.png';
-import DersiertoImg from '../../assets/images/carrusel/Desierto.png';
-import IglesiaImg from '../../assets/images/carrusel/Iglesia.png';
-import LagoImg from '../../assets/images/carrusel/Lago.png';
-import PiscinaImg from '../../assets/images/carrusel/Piscina.png';
-import CiclaImg from '../../assets/images/explore.png'
+import CaptusImg from "../../assets/images/carrusel/Captus.png";
+import DersiertoImg from "../../assets/images/carrusel/Desierto.png";
+import IglesiaImg from "../../assets/images/carrusel/Iglesia.png";
+import LagoImg from "../../assets/images/carrusel/Lago.png";
+import PiscinaImg from "../../assets/images/carrusel/Piscina.png";
+import CiclaImg from "../../assets/images/explore.png";
+import imgTatacoa from "../../assets/images/sitios/Tatacoa.png";
+import imgPitalito from "../../assets/images/sitios/Pitalito.png";
+import imgNevado from "../../assets/images/sitios/Nevado.png";
+import imgGuacharo from "../../assets/images/sitios/Guacharo.png";
+import imgBetania from "../../assets/images/sitios/Betania.png";
+import imgAgustin from "../../assets/images/sitios/Agustin.png";
 
 const carouselImages = [
   { id: 1, img: CaptusImg },
@@ -21,7 +27,7 @@ const sitios = [
   {
     nombre: "Desierto de la Tatacoa",
     ubicacion: "Villavieja",
-    imagen: "https://picsum.photos/400/300?random=6",
+    imagen: imgTatacoa,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "El Desierto de la Tatacoa es uno de los paisajes más sorprendentes del Huila y de Colombia. Aunque se le conoce como desierto, en realidad es un bosque seco tropical que antiguamente fue un mar. Sus formaciones rocosas rojizas y grises, talladas por el viento y la lluvia, crean un escenario casi irreal. Es el lugar perfecto para la observación astronómica, ya que cuenta con uno de los cielos más limpios del país.",
@@ -29,7 +35,7 @@ const sitios = [
   {
     nombre: "Nevado del Huila",
     ubicacion: "Sur del departamento",
-    imagen: "https://picsum.photos/400/300?random=7",
+    imagen: imgNevado,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "El Nevado del Huila es el pico más alto del centro y sur de Colombia, y uno de los volcanes más emblemáticos de la Cordillera Central. Su cumbre nevada, que alcanza más de 5.300 metros sobre el nivel del mar, es un símbolo de majestuosidad natural y de respeto hacia la montaña.",
@@ -37,7 +43,7 @@ const sitios = [
   {
     nombre: "Parque Arqueológico de San Agustín",
     ubicacion: "San Agustín",
-    imagen: "https://picsum.photos/400/300?random=8",
+    imagen: imgAgustin,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "El Parque Arqueológico de San Agustín es Patrimonio de la Humanidad declarado por la UNESCO. Alberga el mayor conjunto de monumentos religiosos y esculturas megalíticas de América Latina.",
@@ -45,7 +51,7 @@ const sitios = [
   {
     nombre: "Embalse de Betania",
     ubicacion: "Yaguará",
-    imagen: "https://picsum.photos/400/300?random=9",
+    imagen: imgBetania,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "El Embalse de Betania es un espejo de agua de gran belleza, resultado de la represa construida sobre el río Magdalena. Rodeado por montañas y vegetación, es el sitio ideal para practicar deportes náuticos.",
@@ -53,7 +59,7 @@ const sitios = [
   {
     nombre: "Cueva de los Guácharos",
     ubicacion: "Acevedo",
-    imagen: "https://picsum.photos/400/300?random=10",
+    imagen: imgGuacharo,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "El Parque Nacional Natural Cueva de los Guácharos protege ecosistemas únicos y espectaculares formaciones rocosas.",
@@ -61,7 +67,7 @@ const sitios = [
   {
     nombre: "Ruta del Café",
     ubicacion: "Pitalito",
-    imagen: "https://picsum.photos/400/300?random=11",
+    imagen: imgPitalito,
     video: "https://www.youtube.com/embed/BcPfW4Bni2g",
     descripcion:
       "La Ruta del Café en Pitalito ofrece una experiencia sensorial completa, desde los cultivos en las montañas hasta la taza servida con aroma y sabor únicos.",
@@ -75,7 +81,8 @@ const eventos = [
     title: "Festival del Bambuco",
     place: "📍 Neiva",
     date: "🗓️ Junio - Julio",
-    description: "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
+    description:
+      "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
   },
   {
     id: 2,
@@ -83,7 +90,8 @@ const eventos = [
     title: "Fiesta del Sanjuanero",
     place: "📍 Neiva",
     date: "🗓️ Finales de junio",
-    description: "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
+    description:
+      "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
   },
   {
     id: 3,
@@ -91,7 +99,8 @@ const eventos = [
     title: "Carnavalito de Pitalito",
     place: "📍 Pitalito",
     date: "🗓️ Enero",
-    description: "Desfiles infantiles, música y diversión para toda la familia.",
+    description:
+      "Desfiles infantiles, música y diversión para toda la familia.",
   },
   {
     id: 4,
@@ -99,7 +108,8 @@ const eventos = [
     title: "Festival de Brujas",
     place: "📍 La Jagua",
     date: "🗓️ Octubre",
-    description: "Una noche mágica entre leyendas, desfiles y creatividad huilense.",
+    description:
+      "Una noche mágica entre leyendas, desfiles y creatividad huilense.",
   },
   {
     id: 5,
@@ -107,7 +117,8 @@ const eventos = [
     title: "Fiesta del Sanjuanero",
     place: "📍 Neiva",
     date: "🗓️ Finales de junio",
-    description: "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
+    description:
+      "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
   },
   {
     id: 6,
@@ -115,25 +126,27 @@ const eventos = [
     title: "Festival del Bambuco",
     place: "📍 Neiva",
     date: "🗓️ Junio - Julio",
-    description: "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
+    description:
+      "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
   },
 ];
 
 export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [mostrarTodo, setMostrarTodo] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [sitioSeleccionado, setSitioSeleccionado] = useState(null);
   const navigate = useNavigate();
-
-  const mostrarSitios = mostrarTodo ? sitios : sitios.slice(0, 4);
+  const isMobile = window.innerWidth < 768;
+  const mostrarSitios = sitios;
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % carouselImages.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+    setCurrentIndex(
+      (prev) => (prev - 1 + carouselImages.length) % carouselImages.length
+    );
   };
 
   return (
@@ -141,7 +154,10 @@ export default function Home() {
       {/* Carrusel */}
       <CarouselWrapper>
         <CarouselContainer>
-          <CarouselImage src={carouselImages[currentIndex].img} alt="Carousel" />
+          <CarouselImage
+            src={carouselImages[currentIndex].img}
+            alt="Carousel"
+          />
         </CarouselContainer>
 
         <ArrowButton className="left" onClick={handlePrev}>
@@ -162,25 +178,25 @@ export default function Home() {
 
       {/* Título y texto */}
       <ExploreContainer>
-  <ContentLeft>
-    {/* Título y texto */}
-    <TextContainer>
-      <Title>Explora el Huila</Title>
-      <Paragraph>
-        Explora el corazón del sur colombiano. Te invitamos a visitar nuestro
-        mapa interactivo y los comercios que allí encontrarás.
-      </Paragraph>
-    </TextContainer>
+        <ContentLeft>
+          {/* Título y texto */}
+          <TextContainer>
+            <Title>Explora el Huila</Title>
+            <Paragraph>
+              Explora el corazón del sur colombiano. Te invitamos a visitar
+              nuestro mapa interactivo y los comercios que allí encontrarás.
+            </Paragraph>
+          </TextContainer>
 
-    {/* Botón a mapa */}
-    <MapButton onClick={() => navigate("/maps")}>
-      Navega por el mapa interactivo
-    </MapButton>
-  </ContentLeft>
+          {/* Botón a mapa */}
+          <MapButton onClick={() => navigate("/maps")}>
+            Navega por el mapa interactivo
+          </MapButton>
+        </ContentLeft>
 
-  {/* Imagen cicla */}
-  <CiclaImage src={CiclaImg} alt="Explore" />
-</ExploreContainer>
+        {/* Imagen cicla */}
+        <CiclaImage src={CiclaImg} alt="Explore" />
+      </ExploreContainer>
 
       {/* Sección con fondo verde */}
       <GreenSection>
@@ -205,27 +221,29 @@ export default function Home() {
         <EventSubtitle>No te pierdas los mejores destinos</EventSubtitle>
       </EventSection>
 
-      {mostrarSitios.map((sitio, index) => (
-        <SitioRow key={index} reverse={index % 2 === 1}>
-          <SitioImage src={sitio.imagen} alt={sitio.nombre} />
-          <SitioTextContainer reverse={index % 2 === 1}>
-            <SitioName>{sitio.nombre}</SitioName>
-            <SitioLocation>{sitio.ubicacion}</SitioLocation>
-            <ExploreButton
-              onClick={() => {
-                setSitioSeleccionado(sitio);
-                setModalVisible(true);
-              }}
-            >
-              Explorar
-            </ExploreButton>
-          </SitioTextContainer>
-        </SitioRow>
-      ))}
+      <DestinosGrid>
+        {mostrarSitios.map((sitio, index) => (
+          <DestinoCard key={index}>
+            <DestinoImageWrapper>
+              <DestinoImage src={sitio.imagen} alt={sitio.nombre} />
+            </DestinoImageWrapper>
 
-      <ToggleButton onClick={() => setMostrarTodo(!mostrarTodo)}>
-        {mostrarTodo ? "Ver menos destinos" : "Ver más destinos"}
-      </ToggleButton>
+            <DestinoInfo>
+              <DestinoName>{sitio.nombre}</DestinoName>
+              <DestinoLocation>📍 {sitio.ubicacion}</DestinoLocation>
+
+              <ExploreButton
+                onClick={() => {
+                  setSitioSeleccionado(sitio);
+                  setModalVisible(true);
+                }}
+              >
+                Explorar
+              </ExploreButton>
+            </DestinoInfo>
+          </DestinoCard>
+        ))}
+      </DestinosGrid>
 
       {/* Modal */}
       {modalVisible && sitioSeleccionado && (
@@ -245,7 +263,9 @@ export default function Home() {
             <InfoContainer>
               <ModalTitle>{sitioSeleccionado.nombre}</ModalTitle>
               <ModalUbicacion>📍 {sitioSeleccionado.ubicacion}</ModalUbicacion>
-              <ModalDescripcion>{sitioSeleccionado.descripcion}</ModalDescripcion>
+              <ModalDescripcion>
+                {sitioSeleccionado.descripcion}
+              </ModalDescripcion>
             </InfoContainer>
             <CloseButton onClick={() => setModalVisible(false)}>
               Cerrar
@@ -315,7 +335,7 @@ const Container = styled.div`
 const CarouselWrapper = styled.div`
   position: relative;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 40px auto 0;
   padding: 0 20px;
 `;
@@ -370,10 +390,10 @@ const DotsContainer = styled.div`
 `;
 
 const Dot = styled.div`
-  width: ${props => props.active ? "12px" : "10px"};
-  height: ${props => props.active ? "12px" : "10px"};
+  width: ${(props) => (props.active ? "12px" : "10px")};
+  height: ${(props) => (props.active ? "12px" : "10px")};
   border-radius: 50%;
-  background-color: ${props => props.active ? "#008073" : "#ccc"};
+  background-color: ${(props) => (props.active ? "#008073" : "#ccc")};
   transition: all 0.3s;
 `;
 
@@ -515,58 +535,60 @@ const EventSubtitle = styled.p`
   color: #444;
 `;
 
-const SitioRow = styled.div`
-  display: flex;
-  flex-direction: ${props => props.reverse ? "row-reverse" : "row"};
-  align-items: center;
-  justify-content: space-between;
+const DestinosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
   max-width: 1200px;
   margin: 20px auto;
   padding: 0 20px;
-  gap: 20px;
+`;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
+const DestinoCard = styled.div`
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.18);
   }
 `;
 
-const SitioImage = styled.img`
-  width: 48%;
-  height: 160px;
-  border-radius: 10px;
+const DestinoImageWrapper = styled.div`
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+`;
+
+const DestinoImage = styled.img`
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
 `;
 
-const SitioTextContainer = styled.div`
-  width: 48%;
-  display: flex;
-  flex-direction: column;
-  align-items: ${props => props.reverse ? "flex-end" : "flex-start"};
-
-  @media (max-width: 768px) {
-    width: 100%;
-    align-items: flex-start;
-  }
+const DestinoInfo = styled.div`
+  padding: 15px;
+  text-align: center;
 `;
 
-const SitioName = styled.h3`
+const DestinoName = styled.h3`
   font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #008073;
 `;
 
-const SitioLocation = styled.p`
+const DestinoLocation = styled.p`
   font-size: 14px;
-  color: #555;
-  margin-bottom: 10px;
+  color: #666;
+  margin-bottom: 12px;
 `;
 
 const ExploreButton = styled.button`
-  background-color: #00B89C;
+  background-color: #00b89c;
   color: white;
   border: none;
   border-radius: 8px;
@@ -577,25 +599,6 @@ const ExploreButton = styled.button`
 
   &:hover {
     background-color: #009680;
-  }
-`;
-
-const ToggleButton = styled.button`
-  background-color: #2C786C;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
-  display: block;
-  margin: 20px auto;
-  width: 70%;
-  max-width: 300px;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #235e54;
   }
 `;
 
@@ -637,7 +640,7 @@ const InfoContainer = styled.div`
 const ModalTitle = styled.h2`
   font-size: 22px;
   font-weight: bold;
-  color: #00B89C;
+  color: #00b89c;
   margin-bottom: 5px;
 `;
 
@@ -655,7 +658,7 @@ const ModalDescripcion = styled.p`
 `;
 
 const CloseButton = styled.button`
-  background-color: #2C786C;
+  background-color: #2c786c;
   color: white;
   border: none;
   border-radius: 10px;
@@ -677,7 +680,7 @@ const BackgroundSection = styled.div`
   width: 100%;
   height: 250px;
   margin: 40px 0;
-  background-image: url('https://picsum.photos/1200/400?random=20');
+  background-image: url("https://picsum.photos/1200/400?random=20");
   background-size: cover;
   background-position: center;
   display: flex;
@@ -708,7 +711,7 @@ const BackgroundText = styled.div`
   }
 
   p {
-    color: #E8F6F3;
+    color: #e8f6f3;
     font-size: 16px;
   }
 `;
@@ -742,7 +745,7 @@ const FlipCardInner = styled.div`
   height: 100%;
   transition: transform 0.6s;
   transform-style: preserve-3d;
-  transform: ${props => props.flipped ? 'rotateY(180deg)' : 'rotateY(0)'};
+  transform: ${(props) => (props.flipped ? "rotateY(180deg)" : "rotateY(0)")};
 `;
 
 const FlipCardFront = styled.div`
@@ -766,7 +769,7 @@ const FlipCardBack = styled.div`
   height: 100%;
   backface-visibility: hidden;
   transform: rotateY(180deg);
-  background-color: #2C786C;
+  background-color: #2c786c;
   border-radius: 10px;
   padding: 15px;
   display: flex;
@@ -784,7 +787,7 @@ const FlipCardBack = styled.div`
 
   p {
     font-size: 12px;
-    color: #E8F6F3;
+    color: #e8f6f3;
     margin: 3px 0;
   }
 
@@ -810,7 +813,7 @@ const SocialIcon = styled.a`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #E8F6F3;
+  color: #e8f6f3;
   transition: all 0.3s;
   text-decoration: none;
 
