@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Welcome from "../pages/welcome";
 import Home from "../pages/home/Home";
 import Chat from "../pages/chat/Chat";
 import Maps from "../pages/map/Maps";
@@ -8,7 +9,11 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Ruta pública - Landing page */}
+        <Route path="/" element={<Welcome />} />
+        
+        {/* Rutas protegidas - requieren autenticación */}
+        <Route path="/home" element={<Home />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/maps" element={<Maps />} />
         <Route path="/locations" element={<Locations />} />
