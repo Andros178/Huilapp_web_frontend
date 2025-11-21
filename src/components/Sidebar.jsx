@@ -25,6 +25,7 @@ const parseJwt = (token) => {
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
 
@@ -104,25 +105,41 @@ export default function Sidebar() {
         </Nav>
 
         {/* ---------- BOTÓN DE CERRAR SESIÓN ---------- */}
-        <LogoutButton
-          onClick={async () => {
-            try {
-              await fetch("https://huilapp-backend.onrender.com/users/logout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-              });
-            } catch (e) {
-              console.error("Error en logout:", e);
-            }
-
-            localStorage.removeItem("token");
-            setIsOpen(false);
-            window.location.href = "/login";
-          }}
-        >
+        <LogoutButton onClick={() => setShowLogoutConfirm(true)}>
           <LogoutIcon src={logoutIcon} alt="Cerrar sesión" />
           <span>Cerrar sesión</span>
         </LogoutButton>
+
+        {showLogoutConfirm && (
+          <ConfirmModalOverlay onClick={() => setShowLogoutConfirm(false)}>
+            <ConfirmModal onClick={(e) => e.stopPropagation()}>
+              <ModalTitle>¿Cerrar sesión?</ModalTitle>
+              <ModalText>¿Estás seguro que deseas cerrar la sesión?</ModalText>
+              <ModalButtons>
+                <ModalCancel onClick={() => setShowLogoutConfirm(false)}>Cancelar</ModalCancel>
+                <ModalConfirm
+                  onClick={async () => {
+                    try {
+                      await fetch("https://huilapp-backend.onrender.com/users/logout", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                      });
+                    } catch (e) {
+                      console.error("Error en logout:", e);
+                    }
+
+                    localStorage.removeItem("token");
+                    setIsOpen(false);
+                    setShowLogoutConfirm(false);
+                    window.location.href = "/login";
+                  }}
+                >
+                  Confirmar
+                </ModalConfirm>
+              </ModalButtons>
+            </ConfirmModal>
+          </ConfirmModalOverlay>
+        )}
       </SidebarContainer>
 
       {isOpen && <Overlay onClick={() => setIsOpen(false)} />}
@@ -261,4 +278,58 @@ const Overlay = styled.div`
   @media (min-width: 1024px) {
     display: none;
   }
+`;
+
+/* ------------------ Modal confirm logout ------------------ */
+const ConfirmModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ConfirmModal = styled.div`
+  width: 92%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0 0 8px 0;
+  font-size: 18px;
+`;
+
+const ModalText = styled.p`
+  margin: 0 0 18px 0;
+  color: #444;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`;
+
+const ModalConfirm = styled.button`
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+`;
+
+const ModalCancel = styled.button`
+  background: transparent;
+  color: #444;
+  border: 1px solid #ddd;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
 `;

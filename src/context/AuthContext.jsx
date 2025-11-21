@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/auth.service';
+import apiService from '../services/api.service';
 
 const AuthContext = createContext(null);
 
@@ -108,6 +109,65 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  /**
+   * Actualizar datos del perfil del usuario
+   * @param {string|number} id - id del usuario
+   * @param {object} data - campos a actualizar
+   */
+  const updateProfile = async (id, data) => {
+    try {
+      // El backend espera también el campo `usuario` (nombre de usuario). Si no viene en `data`, tomarlo del user actual.
+      const payload = { ...data };
+      if ((!payload.usuario || payload.usuario === '') && user && user.usuario) {
+        payload.usuario = user.usuario;
+      }
+
+      await apiService.put(`/users/${id}`, payload);
+
+      // Actualizar user en contexto y en localStorage
+      setUser((prev) => {
+        const updated = { ...(prev || {}), ...payload };
+        try {
+          localStorage.setItem('user', JSON.stringify(updated));
+        } catch (e) {
+          console.error('No se pudo guardar user en localStorage', e);
+        }
+        return updated;
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error al actualizar perfil:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Refrescar los datos del usuario obteniéndolos del backend
+   */
+  const refreshUser = async () => {
+    try {
+      if (!user || !user.id) return null;
+      const users = await apiService.get('/users');
+      if (Array.isArray(users)) {
+        const updated = users.find((u) => String(u.id) === String(user.id));
+        if (updated) {
+          setUser(updated);
+          try {
+            localStorage.setItem('user', JSON.stringify(updated));
+          } catch (e) {
+            console.error('No se pudo guardar user en localStorage', e);
+          }
+          return updated;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error al refrescar usuario:', error);
+      return null;
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -116,6 +176,8 @@ export const AuthProvider = ({ children }) => {
     register,
     registerWithPhoto,
     logout,
+    updateProfile,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
