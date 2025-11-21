@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import styled from "styled-components";
 
@@ -21,12 +21,17 @@ import Terms from "../pages/profile/Terms";
 import Security from "../pages/profile/Security";
 import EditProfile from "../pages/profile/EditProfile";
 
-function AppRouter() {
-  return (
-    <BrowserRouter>
-      <Sidebar />
+// Rutas públicas donde NO debe aparecer el sidebar ni el margen
+const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/verify-code', '/reset-password'];
 
-      <MainContainer>
+function AppContent() {
+  const location = useLocation();
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+
+  return (
+    <>
+      <Sidebar />
+      <MainContainer isPublicRoute={isPublicRoute}>
         <Routes>
           {/* Ruta pública - Landing page */}
           <Route path="/" element={<Welcome />} />
@@ -54,15 +59,23 @@ function AppRouter() {
           <Route path="/admin/users" element={<Users />} />
         </Routes>
       </MainContainer>
+    </>
+  );
+}
+
+function AppRouter() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
 
 const MainContainer = styled.main`
-  padding: 20px;
+  padding: ${({ isPublicRoute }) => (isPublicRoute ? '0' : '20px')};
 
   @media (min-width: 1024px) {
-    margin-left: 240px; /* Solo en desktop */
+    margin-left: ${({ isPublicRoute }) => (isPublicRoute ? '0' : '240px')}; /* Solo en desktop */
   }
 `;
 

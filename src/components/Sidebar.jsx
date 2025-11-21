@@ -25,6 +25,7 @@ const parseJwt = (token) => {
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
 
   // 🔄 Se ejecuta cada vez que cambia la ruta
@@ -32,14 +33,26 @@ export default function Sidebar() {
     const token = localStorage.getItem("token");
     if (!token) {
       setIsAdmin(false);
+      setIsAuthenticated(false);
       return;
     }
 
     const payload = parseJwt(token);
+    if (!payload) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    setIsAuthenticated(true);
     const admin =
       payload && payload.rol && payload.rol.toLowerCase() === "administrador";
     setIsAdmin(Boolean(admin));
   }, [location.pathname]); // ⬅ antes estaba []
+
+  // No renderizar el Sidebar si no está autenticado
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const sitesPath = isAdmin ? "/admin/sites" : "/locations";
   const sitesLabel = isAdmin ? "Sitios (admin)" : "Mis sitios";
