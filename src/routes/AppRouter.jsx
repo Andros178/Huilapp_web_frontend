@@ -9,6 +9,9 @@ import Maps from "../pages/map/Maps";
 import Locations from "../pages/locations/Locations";
 import Login from '../pages/login/Login';
 import Register from '../pages/register/register';
+import RecoverPassword from '../recoverPassword/recover-password';
+import VerifyCode from '../recoverPassword/verify-code';
+import ResetPassword from '../recoverPassword/reset-password';
 
 import Profile from "../pages/profile/Profile";
 import AdminSites from "../pages/admin/AdminSites";
@@ -31,6 +34,9 @@ function AppRouter() {
           {/* Rutas de autenticación */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<RecoverPassword />} />
+          <Route path="/verify-code" element={<VerifyCode />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Rutas protegidas - requieren autenticación */}
           <Route path="/home" element={<Home />} />
