@@ -10,6 +10,8 @@ import Locations from "../pages/locations/Locations";
 import Login from '../pages/login/Login';
 import Register from '../pages/register/register';
 import Profile from "../pages/profile/Profile";
+import AdminSites from "../pages/admin/AdminSites";
+import Users from "../pages/admin/User";
 
 function AppRouter() {
   return (
@@ -17,26 +19,30 @@ function AppRouter() {
       <Sidebar />
 
       <MainContainer>
-      <Routes>
-        {/* Ruta pública - Landing page */}
-        <Route path="/" element={<Welcome />} />
-        
-        {/* Rutas de autenticación */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Rutas protegidas - requieren autenticación */}
-        <Route path="/home" element={<Home />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/maps" element={<Maps />} />
-        <Route path="/locations" element={<Locations />} />
-        <Route path="/profile" element={<Profile />} />
+        <Routes>
+          {/* Ruta pública - Landing page */}
+          <Route path="/" element={<Welcome />} />
+          
+          {/* Rutas de autenticación */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Rutas protegidas - requieren autenticación */}
+          <Route path="/home" element={<Home />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/maps" element={<Maps />} />
+          <Route path="/locations" element={<Locations />} />
+          <Route path="/profile" element={<Profile />} />
 
-      </Routes>
-           </MainContainer>
+          {/* Ruta de administrador */}
+          <Route path="/admin/sites" element={<AdminSites />} />
+          <Route path="/admin/users" element={<Users />} />
+        </Routes>
+      </MainContainer>
     </BrowserRouter>
   );
 }
+
 const MainContainer = styled.main`
   padding: 20px;
 
