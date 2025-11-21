@@ -1,829 +1,646 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import CaptusImg from "../../assets/images/carrusel/Captus.png";
-import DersiertoImg from "../../assets/images/carrusel/Desierto.png";
-import IglesiaImg from "../../assets/images/carrusel/Iglesia.png";
-import LagoImg from "../../assets/images/carrusel/Lago.png";
-import PiscinaImg from "../../assets/images/carrusel/Piscina.png";
-import CiclaImg from "../../assets/images/explore.png";
-import imgTatacoa from "../../assets/images/sitios/Tatacoa.png";
-import imgPitalito from "../../assets/images/sitios/Pitalito.png";
-import imgNevado from "../../assets/images/sitios/Nevado.png";
-import imgGuacharo from "../../assets/images/sitios/Guacharo.png";
-import imgBetania from "../../assets/images/sitios/Betania.png";
-import imgAgustin from "../../assets/images/sitios/Agustin.png";
+import { FiChevronRight as ChevronRight, FiArrowRight as ArrowRight } from "react-icons/fi";
+import { FaMapPin as MapPin, FaCompass as Compass } from "react-icons/fa";
+import { MdCamera as Camera, MdStar as Star } from "react-icons/md";
+import Footer from "../../components/Footer";
 
-const carouselImages = [
-  { id: 1, img: CaptusImg },
-  { id: 2, img: DersiertoImg },
-  { id: 3, img: IglesiaImg },
-  { id: 4, img: LagoImg },
-  { id: 5, img: PiscinaImg },
-];
+import imgHero from '../../assets/images/Desierto.png';
+import imgCicla from '../../assets/images/explore.png';
+import imgTatacoa from '../../assets/images/sitios/Tatacoa.png';
+import imgAgustin from '../../assets/images/sitios/Agustin.jpg';
+import imgNevado from '../../assets/images/sitios/Nevado.jpg';
+import imgBetania from '../../assets/images/sitios/Betania.jpg';
+import imgGuacharo from '../../assets/images/sitios/Guacharo.jpg';
+import imgPitalito from '../../assets/images/sitios/Pitalito.jpg';
+import imgBambuco from '../../assets/images/eventos/Bambuco.jpg';
+import imgJagua from '../../assets/images/eventos/Jagua.jpeg';
+import imgJunero from '../../assets/images/eventos/Junero.jpg';
 
-const sitios = [
-  {
-    nombre: "Desierto de la Tatacoa",
-    ubicacion: "Villavieja",
-    imagen: imgTatacoa,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "El Desierto de la Tatacoa es uno de los paisajes más sorprendentes del Huila y de Colombia. Aunque se le conoce como desierto, en realidad es un bosque seco tropical que antiguamente fue un mar. Sus formaciones rocosas rojizas y grises, talladas por el viento y la lluvia, crean un escenario casi irreal. Es el lugar perfecto para la observación astronómica, ya que cuenta con uno de los cielos más limpios del país.",
-  },
-  {
-    nombre: "Nevado del Huila",
-    ubicacion: "Sur del departamento",
-    imagen: imgNevado,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "El Nevado del Huila es el pico más alto del centro y sur de Colombia, y uno de los volcanes más emblemáticos de la Cordillera Central. Su cumbre nevada, que alcanza más de 5.300 metros sobre el nivel del mar, es un símbolo de majestuosidad natural y de respeto hacia la montaña.",
-  },
-  {
-    nombre: "Parque Arqueológico de San Agustín",
-    ubicacion: "San Agustín",
-    imagen: imgAgustin,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "El Parque Arqueológico de San Agustín es Patrimonio de la Humanidad declarado por la UNESCO. Alberga el mayor conjunto de monumentos religiosos y esculturas megalíticas de América Latina.",
-  },
-  {
-    nombre: "Embalse de Betania",
-    ubicacion: "Yaguará",
-    imagen: imgBetania,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "El Embalse de Betania es un espejo de agua de gran belleza, resultado de la represa construida sobre el río Magdalena. Rodeado por montañas y vegetación, es el sitio ideal para practicar deportes náuticos.",
-  },
-  {
-    nombre: "Cueva de los Guácharos",
-    ubicacion: "Acevedo",
-    imagen: imgGuacharo,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "El Parque Nacional Natural Cueva de los Guácharos protege ecosistemas únicos y espectaculares formaciones rocosas.",
-  },
-  {
-    nombre: "Ruta del Café",
-    ubicacion: "Pitalito",
-    imagen: imgPitalito,
-    video: "https://www.youtube.com/embed/BcPfW4Bni2g",
-    descripcion:
-      "La Ruta del Café en Pitalito ofrece una experiencia sensorial completa, desde los cultivos en las montañas hasta la taza servida con aroma y sabor únicos.",
-  },
-];
-
-const eventos = [
-  {
-    id: 1,
-    image: "https://picsum.photos/400/300?random=12",
-    title: "Festival del Bambuco",
-    place: "📍 Neiva",
-    date: "🗓️ Junio - Julio",
-    description:
-      "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
-  },
-  {
-    id: 2,
-    image: "https://picsum.photos/400/300?random=13",
-    title: "Fiesta del Sanjuanero",
-    place: "📍 Neiva",
-    date: "🗓️ Finales de junio",
-    description:
-      "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
-  },
-  {
-    id: 3,
-    image: "https://picsum.photos/400/300?random=14",
-    title: "Carnavalito de Pitalito",
-    place: "📍 Pitalito",
-    date: "🗓️ Enero",
-    description:
-      "Desfiles infantiles, música y diversión para toda la familia.",
-  },
-  {
-    id: 4,
-    image: "https://picsum.photos/400/300?random=15",
-    title: "Festival de Brujas",
-    place: "📍 La Jagua",
-    date: "🗓️ Octubre",
-    description:
-      "Una noche mágica entre leyendas, desfiles y creatividad huilense.",
-  },
-  {
-    id: 5,
-    image: "https://picsum.photos/400/300?random=16",
-    title: "Fiesta del Sanjuanero",
-    place: "📍 Neiva",
-    date: "🗓️ Finales de junio",
-    description:
-      "Vive la alegría del Sanjuanero Huilense con danza, cultura y color.",
-  },
-  {
-    id: 6,
-    image: "https://picsum.photos/400/300?random=17",
-    title: "Festival del Bambuco",
-    place: "📍 Neiva",
-    date: "🗓️ Junio - Julio",
-    description:
-      "El evento más emblemático del Huila, lleno de folclor, música y tradición.",
-  },
-];
-
-export default function Home() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [sitioSeleccionado, setSitioSeleccionado] = useState(null);
+const Home = () => {
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 768;
-  const mostrarSitios = sitios;
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEvento, setSelectedEvento] = useState(null);
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % carouselImages.length);
+  const openModal = (evento) => {
+    setSelectedEvento(evento);
+    setModalVisible(true);
   };
 
-  const handlePrev = () => {
-    setCurrentIndex(
-      (prev) => (prev - 1 + carouselImages.length) % carouselImages.length
-    );
+  const closeModal = () => {
+    setSelectedEvento(null);
+    setModalVisible(false);
   };
 
   return (
     <Container>
-      {/* Carrusel */}
-      <CarouselWrapper>
-        <CarouselContainer>
-          <CarouselImage
-            src={carouselImages[currentIndex].img}
-            alt="Carousel"
-          />
-        </CarouselContainer>
+      <Hero>
+        <HeroImage src={imgHero} />
+        <HeroOverlay />
+        <HeroContent>
+          <HeroTitle>Explora el corazón del Huila</HeroTitle>
+          <HeroSubtitle>Encuentra destinos, rutas, eventos y experiencias únicas</HeroSubtitle>
+          <HeroButton onClick={() => navigate("/maps")}>Ver Mapa <ArrowRight /></HeroButton>
+        </HeroContent>
+      </Hero>
 
-        <ArrowButton className="left" onClick={handlePrev}>
-          <ChevronLeft size={24} />
-        </ArrowButton>
+      <Section>
+        <Explora>
+          <ExploraImage src={imgCicla} />
+          <ExploraText>
+            <SectionTitle>Explora el Huila</SectionTitle>
+            <SectionParagraph>Vive experiencias únicas recorriendo los paisajes cafeteros, montañas, ríos y culturas locales que hacen del Huila un destino inolvidable.</SectionParagraph>
+            <SmallButton onClick={() => navigate("/maps")}>Explorar <ChevronRight /></SmallButton>
+          </ExploraText>
+        </Explora>
+      </Section>
 
-        <ArrowButton className="right" onClick={handleNext}>
-          <ChevronRight size={24} />
-        </ArrowButton>
-      </CarouselWrapper>
-
-      {/* Puntos indicadores */}
-      <DotsContainer>
-        {carouselImages.map((_, index) => (
-          <Dot key={index} active={currentIndex === index} />
-        ))}
-      </DotsContainer>
-
-      {/* Título y texto */}
-      <ExploreContainer>
-        <ContentLeft>
-          {/* Título y texto */}
-          <TextContainer>
-            <Title>Explora el Huila</Title>
-            <Paragraph>
-              Explora el corazón del sur colombiano. Te invitamos a visitar
-              nuestro mapa interactivo y los comercios que allí encontrarás.
-            </Paragraph>
-          </TextContainer>
-
-          {/* Botón a mapa */}
-          <MapButton onClick={() => navigate("/maps")}>
-            Navega por el mapa interactivo
-          </MapButton>
-        </ContentLeft>
-
-        {/* Imagen cicla */}
-        <CiclaImage src={CiclaImg} alt="Explore" />
-      </ExploreContainer>
-
-      {/* Sección con fondo verde */}
-      <GreenSection>
-        <SectionSubtitle>Impulsado por IA</SectionSubtitle>
-        <SectionTitle>
-          ¿Tienes alguna duda? ¡Nuestro chat te ayudará a resolverla!
-        </SectionTitle>
-        <ChatButton onClick={() => navigate("/chat")}>
-          <span>Comenzar</span>
-          <IconContainer>
-            <ArrowRight size={16} />
-          </IconContainer>
-        </ChatButton>
-      </GreenSection>
-
-      {/* Destinos */}
-      <EventSection>
-        <EventTitle>
-          <span className="bold">Destinos </span>
-          <span className="normal">en el Huila</span>
-        </EventTitle>
-        <EventSubtitle>No te pierdas los mejores destinos</EventSubtitle>
-      </EventSection>
-
-      <DestinosGrid>
-        {mostrarSitios.map((sitio, index) => (
-          <DestinoCard key={index}>
-            <DestinoImageWrapper>
-              <DestinoImage src={sitio.imagen} alt={sitio.nombre} />
-            </DestinoImageWrapper>
-
-            <DestinoInfo>
-              <DestinoName>{sitio.nombre}</DestinoName>
-              <DestinoLocation>📍 {sitio.ubicacion}</DestinoLocation>
-
-              <ExploreButton
-                onClick={() => {
-                  setSitioSeleccionado(sitio);
-                  setModalVisible(true);
-                }}
-              >
-                Explorar
-              </ExploreButton>
-            </DestinoInfo>
-          </DestinoCard>
-        ))}
-      </DestinosGrid>
-
-      {/* Modal */}
-      {modalVisible && sitioSeleccionado && (
-        <Modal onClick={() => setModalVisible(false)}>
+      {modalVisible && selectedEvento && (
+        <ModalOverlay onClick={closeModal}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <VideoContainer>
-              <iframe
-                width="100%"
-                height="100%"
-                src={sitioSeleccionado.video}
-                title="Video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </VideoContainer>
-            <InfoContainer>
-              <ModalTitle>{sitioSeleccionado.nombre}</ModalTitle>
-              <ModalUbicacion>📍 {sitioSeleccionado.ubicacion}</ModalUbicacion>
-              <ModalDescripcion>
-                {sitioSeleccionado.descripcion}
-              </ModalDescripcion>
-            </InfoContainer>
-            <CloseButton onClick={() => setModalVisible(false)}>
-              Cerrar
-            </CloseButton>
+            <ModalImage src={selectedEvento.img} alt={selectedEvento.nombre} />
+            <ModalBody>
+              <ModalTitle>{selectedEvento.nombre}</ModalTitle>
+              <ModalDate>{selectedEvento.fecha}</ModalDate>
+              <ModalDescription>{selectedEvento.descripcion}</ModalDescription>
+              <ModalCloseButton onClick={closeModal}>Cerrar</ModalCloseButton>
+            </ModalBody>
           </ModalContent>
-        </Modal>
+        </ModalOverlay>
       )}
 
-      {/* Imagen de fondo */}
-      <BackgroundSection>
-        <BackgroundOverlay />
-        <BackgroundText>
-          <h2>No esperes a que te lo cuenten</h2>
-          <p>
-            Explora sus paisajes, saborea su cultura y descubre experiencias
-            únicas con nuestro mapa interactivo.
-          </p>
-        </BackgroundText>
-      </BackgroundSection>
+      <SectionGray style={{ backgroundColor: '#008073' }}>
+        <IABox>
+          <IAIcon><Compass style={{ color: '#008073' }} size={40} /></IAIcon>
+          <SectionTitle>Planificación con Inteligencia Artificial</SectionTitle>
+          <SectionParagraph>Obtén recomendaciones automáticas basadas en tus intereses y ubicación.</SectionParagraph>
+          <HeroButton style={{ margin: '0 auto', backgroundColor: '#008073', color: '#fff' }} onClick={() => navigate("/chat")}>Probar IA</HeroButton>
+        </IABox>
+      </SectionGray>
 
-      {/* Eventos */}
-      <EventSection>
-        <EventTitle>
-          <span className="bold">Eventos </span>
-          <span className="normal">en el Huila</span>
-        </EventTitle>
-        <EventSubtitle>No te pierdas los próximos eventos</EventSubtitle>
-      </EventSection>
+      <Section>
+        <SectionTitle>Destinos populares</SectionTitle>
+        <DestinosGrid>
+          {destinos.map((item, index) => (
+            <DestinoCard key={index}>
+              <DestinoImg src={item.img} />
+              <DestinoOverlay>
+                <DestinoName>{item.nombre}</DestinoName>
+                <DestinoLugar><MapPin /> {item.lugar}</DestinoLugar>
+              </DestinoOverlay>
+            </DestinoCard>
+          ))}
+        </DestinosGrid>
+      </Section>
 
-      <EventsGrid>
-        {eventos.map((evento) => (
-          <FlipCard key={evento.id} evento={evento} />
-        ))}
-      </EventsGrid>
+      <SectionGray>
+        <SectionTitle style={{color:'#fff'}}>Planifica tu viaje</SectionTitle>
+        <PlanificaGrid>
+          {planifica.map((item, index) => (
+            <PlanBox key={index} onClick={() => navigate("/maps")}> 
+              <PlanIcon>{item.icon}</PlanIcon>
+              <PlanTitle>{item.title}</PlanTitle>
+            </PlanBox>
+          ))}
+        </PlanificaGrid>
+      </SectionGray>
+
+      <Section>
+        <Inspira>
+          <InspiraImg src={imgPitalito} />
+          <InspiraOverlay />
+          <InspiraText>"Viajar te conecta con lo que realmente importa."</InspiraText>
+        </Inspira>
+      </Section>
+
+      <Section>
+        <SectionTitle>Eventos</SectionTitle>
+        <EventosGrid>
+          {eventos.map((item, index) => (
+            <EventoCard key={index}>
+              <EventoImg src={item.img} />
+              <EventoInfo>
+                <EventoTitle>{item.nombre}</EventoTitle>
+                <EventoFecha>{item.fecha}</EventoFecha>
+                <SmallButton onClick={() => openModal(item)}>Ver más <ChevronRight /></SmallButton>
+              </EventoInfo>
+            </EventoCard>
+          ))}
+        </EventosGrid>
+      </Section>
+      <Footer />
     </Container>
   );
-}
+};
 
-// Componente FlipCard
-function FlipCard({ evento }) {
-  const [flipped, setFlipped] = useState(false);
+export default Home;
 
-  return (
-    <FlipCardWrapper onClick={() => setFlipped(!flipped)}>
-      <FlipCardInner flipped={flipped}>
-        <FlipCardFront>
-          <img src={evento.image} alt={evento.title} />
-        </FlipCardFront>
-        <FlipCardBack>
-          <h3>{evento.title}</h3>
-          <p>{evento.place}</p>
-          <p>{evento.date}</p>
-          <p className="description">{evento.description}</p>
-        </FlipCardBack>
-      </FlipCardInner>
-    </FlipCardWrapper>
-  );
-}
+// =============================== DATOS ===============================
+const destinos = [
+  { id: 1, nombre: "Desierto de la Tatacoa", lugar: "Villavieja", img: [imgTatacoa] },
+  { id: 2, nombre: "Parque Arqueológico", lugar: "San Agustín", img: [imgAgustin] },
+  { id: 3, nombre: "Nevado del Huila", lugar: "Zona volcánica", img: [imgNevado] }, 
+  { id: 4, nombre: "Betania", lugar: "Huila", img: [imgBetania] },
+  { id: 5, nombre: "Cueva del Guácharo", lugar: "Paicol", img: [imgGuacharo] },
+  { id: 6, nombre: "Pitalito", lugar: "Huila", img: [imgPitalito] },
+];
 
-// Styled Components
+const planifica = [
+  { title: "Hospedajes", icon: <Camera size={32} /> },
+  { title: "Gastronomía", icon: <Star size={32} /> },
+  { title: "Artesanías", icon: <MapPin size={32} /> },
+  { title: "Actividades", icon: <Compass size={32} /> },
+];
+
+const eventos = [
+  { id: 1, nombre: "Festival del Bambuco", fecha: "Junio", img: imgBambuco, descripcion: "El Festival del Bambuco es una de las celebraciones culturales más representativas del departamento del Huila. Durante varios días, las calles se llenan de música típica, comparsas, reinados folclóricos y muestras artísticas que resaltan la identidad huilense." },
+  { id: 2, nombre: "Festival de las Brujas", fecha: "Agosto", img: imgJagua, descripcion: "El Festival de las Brujas, celebrado en el municipio de La Jagua, es una fiesta cargada de magia, mitología y tradición oral. Durante este evento se realizan desfiles temáticos, concursos de disfraces y presentaciones musicales." },
+  { id: 3, nombre: "Festival de San Juanero", fecha: "Julio", img: imgJunero, descripcion: "El Festival de San Juanero rinde homenaje a uno de los ritmos más emblemáticos del Huila: el Sanjuanero Huilense. En esta festividad se realizan concursos de interpretación y baile, desfiles folclóricos y encuentros culturales." },
+  { id: 4, nombre: "Festival del Bambuco", fecha: "Junio", img: imgBambuco, descripcion: "Esta versión del Festival del Bambuco continúa resaltando la riqueza cultural del Huila con un enfoque en la participación comunitaria. Los asistentes disfrutan de tarimas musicales y ferias gastronómicas." },
+  { id: 5, nombre: "Festival de las Brujas", fecha: "Agosto", img: imgJagua, descripcion: "En esta celebración mística, el Festival de las Brujas destaca las leyendas tradicionales y el folclor huilense. Los visitantes pueden recorrer mercados artesanales y presenciar rituales simbólicos." },
+  { id: 6, nombre: "Festival de San Juanero", fecha: "Julio", img: imgJunero, descripcion: "Otra edición del Festival de San Juanero celebra con intensidad la música y danza tradicional del Huila. Este evento reúne a bailarines, músicos y familias enteras." },
+];
+
+// =============================== STYLES ===============================
 const Container = styled.div`
   width: 100%;
-  background-color: #fff;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  @media (max-width: 768px) {
+    gap: 40px;
+  }
 `;
 
-const CarouselWrapper = styled.div`
+const Hero = styled.div`
   position: relative;
   width: 100%;
-  max-width: 1000px;
-  margin: 40px auto 0;
-  padding: 0 20px;
-`;
-
-const CarouselContainer = styled.div`
-  width: 100%;
-  height: 250px;
+  height: 70vh;
   border-radius: 20px;
   overflow: hidden;
+  @media (max-width: 768px) {
+    height: 30vh;
+    border-radius: 0;
+  }
 `;
 
-const CarouselImage = styled.img`
+const HeroImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
 `;
 
-const ArrowButton = styled.button`
+const HeroOverlay = styled.div`
   position: absolute;
-  top: 45%;
-  transform: translateY(-50%);
-  background-color: #008073;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #006b5f;
-  }
-
-  &.left {
-    left: 35px;
-  }
-
-  &.right {
-    right: 35px;
-  }
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
 `;
 
-const DotsContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 15px;
-  gap: 10px;
-`;
-
-const Dot = styled.div`
-  width: ${(props) => (props.active ? "12px" : "10px")};
-  height: ${(props) => (props.active ? "12px" : "10px")};
-  border-radius: 50%;
-  background-color: ${(props) => (props.active ? "#008073" : "#ccc")};
-  transition: all 0.3s;
-`;
-
-const ExploreContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 0 20px;
-
+const HeroContent = styled.div`
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  color: #fff;
   @media (max-width: 768px) {
-    flex-direction: column;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+  }
+`; 
+
+const HeroTitle = styled.h1`
+  font-size: 48px;
+  margin: 0;
+  @media (max-width: 768px) {
+    font-size: 28px;
   }
 `;
 
-const ContentLeft = styled.div`
-  flex: 1;
+const HeroSubtitle = styled.p`
+  font-size: 20px;
+  margin: 10px 0 20px;
+  @media (max-width: 768px) {
+    font-size: 15px;
+    margin: 8px 0 16px;
+  }
 `;
 
-const TextContainer = styled.div`
-  margin-bottom: 20px;
-`;
-
-const Title = styled.h1`
-  font-size: 26px;
-  font-weight: 700;
-  color: #008073;
-  margin-bottom: 10px;
-`;
-
-const Paragraph = styled.p`
-  font-size: 16px;
-  color: #444;
-  text-align: justify;
-  line-height: 1.6;
-`;
-
-const MapButton = styled.button`
-  background-color: #008073;
-  color: white;
+const HeroButton = styled.button`
+  background: #fff;
+  color: #000;
   border: none;
-  border-radius: 15px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #006b5f;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: bold;
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 14px;
   }
 `;
 
-const CiclaImage = styled.img`
-  width: 100%;
-  max-width: 400px;
-  height: auto;
-  flex-shrink: 0;
+const Section = styled.section`
+  padding: 0 40px;
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
 `;
 
-const GreenSection = styled.div`
-  background-color: #008073;
-  padding: 30px 20px;
-  margin-top: 25px;
-  text-align: center;
-`;
-
-const SectionSubtitle = styled.p`
-  font-size: 10px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 10px;
+const SectionGray = styled.section`
+  padding: 60px 40px;
+  background: #008073;
+  @media (max-width: 768px) {
+    padding: 40px 16px;
+  }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 15px;
-  font-weight: 700;
-  color: white;
+  font-size: 32px;
   margin-bottom: 20px;
-`;
-
-const ChatButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: white;
   color: #008073;
-  border: none;
-  border-radius: 15px;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  width: 80%;
-  max-width: 300px;
-  margin: 0 auto;
-  transition: transform 0.2s;
-
-  &:hover {
-    transform: scale(1.05);
+  @media (max-width: 768px) {
+    font-size: 22px;
+    margin-bottom: 16px;
   }
 `;
 
-const IconContainer = styled.div`
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #008073;
+const SectionParagraph = styled.p`
+  font-size: 18px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  @media (max-width: 768px) {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+`;
+
+const Explora = styled.div`
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 20px;
+  }
+`;
+
+const ExploraImage = styled.img`
+  width: 45%;
+  border-radius: 20px;
+  object-fit: cover;
+  @media (max-width: 768px) {
+    width: 100%;
+    border-radius: 12px;
+  }
+`;
+
+const ExploraText = styled.div`
+  width: 55%;
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
+const SmallButton = styled.button`
+  background: #008073;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-`;
-
-const EventSection = styled.div`
-  max-width: 1200px;
-  margin: 40px auto 0;
-  padding: 0 20px;
-`;
-
-const EventTitle = styled.h2`
-  font-size: 20px;
-  margin-bottom: 5px;
-
-  .bold {
-    font-weight: 700;
-    color: #008073;
-  }
-
-  .normal {
-    font-weight: 400;
-    color: #008073;
+  gap: 6px;
+  @media (max-width: 768px) {
+    padding: 8px 14px;
+    font-size: 14px;
   }
 `;
 
-const EventSubtitle = styled.p`
-  font-size: 14px;
-  color: #444;
+const IABox = styled.div`
+  background: #fff;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 700px;
+  margin: auto;
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
+`;
+
+const IAIcon = styled.div`
+  margin-bottom: 20px;
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const DestinosGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 0 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 `;
 
 const DestinoCard = styled.div`
-  background: white;
-  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.18);
+  @media (max-width: 768px) {
+    border-radius: 12px;
   }
 `;
 
-const DestinoImageWrapper = styled.div`
+const DestinoImg = styled.img`
   width: 100%;
-  height: 200px;
-  overflow: hidden;
-`;
-
-const DestinoImage = styled.img`
-  width: 100%;
-  height: 100%;
+  height: 250px;
   object-fit: cover;
+  transition: .3s;
+  ${DestinoCard}:hover & {
+    transform: scale(1.1);
+  }
+  @media (max-width: 768px) {
+    height: 200px;
+  }
 `;
 
-const DestinoInfo = styled.div`
+const DestinoOverlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  width: 100%;
   padding: 15px;
-  text-align: center;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: #fff;
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
 `;
 
 const DestinoName = styled.h3`
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: #008073;
-`;
-
-const DestinoLocation = styled.p`
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-`;
-
-const ExploreButton = styled.button`
-  background-color: #00b89c;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #009680;
+  margin: 0;
+  font-size: 20px;
+  @media (max-width: 768px) {
+    font-size: 16px;
   }
 `;
 
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
+const DestinoLugar = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+`;
+
+const PlanificaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 30px;
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+`;
+
+const PlanBox = styled.div`
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  color: #008073;
+  cursor: pointer;
+  transition: .3s;
+  border: 1px solid #eee;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  @media (max-width: 768px) {
+    padding: 20px 12px;
+    border-radius: 12px;
+  }
+`;
+
+const PlanIcon = styled.div`
+  margin-bottom: 15px;
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+  }
+`;
+
+const PlanTitle = styled.h3`
+  font-size: 18px;
+  margin: 0;
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+`;
+
+const Inspira = styled.div`
+  position: relative;
+  width: 100%;
+  height: 350px;
+  border-radius: 20px;
+  overflow: hidden;
+  @media (max-width: 768px) {
+    height: 250px;
+    border-radius: 12px;
+  }
+`;
+
+const InspiraImg = styled.img`
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+  object-fit: cover;
+  z-index: 0;
+`;
+
+const InspiraOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+`;
+
+const InspiraText = styled.div`
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  overflow-y: auto;
+  text-align: center;
+  color: #fff;
+  z-index: 2;
+  font-size: 26px;
+  font-weight: 600;
   padding: 20px;
+  @media (max-width: 768px) {
+    font-size: 18px;
+    padding: 16px;
+  }
+`;
+
+const EventosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 35px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+const EventoCard = styled.div`
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  transition: .3s;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  @media (max-width: 768px) {
+    border-radius: 12px;
+  }
+`;
+
+const EventoImg = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  @media (max-width: 768px) {
+    height: 180px;
+  }
+`;
+
+const EventoInfo = styled.div`
+  padding: 20px;
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const EventoTitle = styled.h3`
+  font-size: 20px;
+  margin-bottom: 10px;
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+`;
+
+const EventoFecha = styled.p`
+  font-size: 14px;
+  margin-bottom: 15px;
+  opacity: 0.7;
+  @media (max-width: 768px) {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
-  width: 100%;
-  max-width: 800px;
-  border-radius: 10px;
+  background: #fff;
+  width: 85%;
+  max-width: 900px;
+  border-radius: 12px;
   overflow: hidden;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const VideoContainer = styled.div`
-  width: 100%;
-  height: 300px;
-  background-color: #000;
-`;
-
-const InfoContainer = styled.div`
-  padding: 20px;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 22px;
-  font-weight: bold;
-  color: #00b89c;
-  margin-bottom: 5px;
-`;
-
-const ModalUbicacion = styled.p`
-  font-size: 16px;
-  color: #555;
-  margin-bottom: 15px;
-`;
-
-const ModalDescripcion = styled.p`
-  font-size: 15px;
-  color: #444;
-  line-height: 1.6;
-  text-align: justify;
-`;
-
-const CloseButton = styled.button`
-  background-color: #2c786c;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 12px;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-  width: calc(100% - 40px);
-  margin: 20px;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #235e54;
-  }
-`;
-
-const BackgroundSection = styled.div`
-  position: relative;
-  width: 100%;
-  height: 250px;
-  margin: 40px 0;
-  background-image: url("https://picsum.photos/1200/400?random=20");
-  background-size: cover;
-  background-position: center;
   display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const BackgroundOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-`;
-
-const BackgroundText = styled.div`
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 0 20px;
-
-  h2 {
-    color: white;
-    font-size: 26px;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-
-  p {
-    color: #e8f6f3;
-    font-size: 16px;
-  }
-`;
-
-const EventsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 20px;
-
+  flex-direction: row;
   @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
   }
 `;
 
-const FlipCardWrapper = styled.div`
-  perspective: 1000px;
-  cursor: pointer;
-  height: 200px;
-`;
-
-const FlipCardInner = styled.div`
-  position: relative;
-  width: 100%;
+const ModalImage = styled.img`
+  width: 40%;
+  object-fit: cover;
   height: 100%;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-  transform: ${(props) => (props.flipped ? "rotateY(180deg)" : "rotateY(0)")};
-`;
-
-const FlipCardFront = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  border-radius: 10px;
-  overflow: hidden;
-
-  img {
+  @media (max-width: 768px) {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: 200px;
   }
 `;
 
-const FlipCardBack = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  transform: rotateY(180deg);
-  background-color: #2c786c;
-  border-radius: 10px;
-  padding: 15px;
+const ModalBody = styled.div`
+  padding: 20px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  color: white;
-
-  h3 {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  p {
-    font-size: 12px;
-    color: #e8f6f3;
-    margin: 3px 0;
-  }
-
-  .description {
-    font-size: 11px;
-    margin-top: 8px;
-    line-height: 1.4;
+  gap: 12px;
+  @media (max-width: 768px) {
+    padding: 16px;
+    overflow-y: auto;
   }
 `;
 
-const SocialIcons = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 20px;
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 22px;
+  color: #008073;
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
 `;
 
-const SocialIcon = styled.a`
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #e8f6f3;
-  transition: all 0.3s;
-  text-decoration: none;
-
-  svg {
-    width: 20px;
-    height: 20px;
+const ModalDate = styled.p`
+  margin: 0;
+  color: #666;
+  @media (max-width: 768px) {
+    font-size: 14px;
   }
+`;
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.25);
-    transform: scale(1.1);
+const ModalDescription = styled.p`
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+`;
+
+const ModalCloseButton = styled.button`
+  background: #008073;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-self: flex-end;
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 12px;
+    align-self: stretch;
   }
 `;

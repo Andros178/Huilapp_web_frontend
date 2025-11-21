@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ProtectedRoute from "../components/ProtectedRoute";
+import PublicRoute from "../components/PublicRoute";
 import styled from "styled-components";
 
 import Welcome from "../pages/welcome";
@@ -9,39 +11,73 @@ import Maps from "../pages/map/Maps";
 import Locations from "../pages/locations/Locations";
 import Login from '../pages/login/Login';
 import Register from '../pages/register/register';
+import RecoverPassword from '../recoverPassword/recover-password';
+import VerifyCode from '../recoverPassword/verify-code';
+import ResetPassword from '../recoverPassword/reset-password';
+
 import Profile from "../pages/profile/Profile";
+import AdminSites from "../pages/admin/AdminSites";
+import Users from "../pages/admin/User";
+import Help from "../pages/profile/Help";
+import Terms from "../pages/profile/Terms";
+import Security from "../pages/profile/Security";
+import EditProfile from "../pages/profile/EditProfile";
+
+// Rutas públicas donde NO debe aparecer el sidebar ni el margen
+const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/verify-code', '/reset-password'];
+
+function AppContent() {
+  const location = useLocation();
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {!isPublicRoute && <Sidebar />}
+      <MainContainer isPublicRoute={isPublicRoute}>
+        <Routes>
+          {/* Ruta pública - Landing page */}
+          <Route path="/" element={<Welcome />} />
+          
+          {/* Rutas de autenticación - redirigen a /home si ya está logueado */}
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><RecoverPassword /></PublicRoute>} />
+          <Route path="/verify-code" element={<PublicRoute><VerifyCode /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          
+          {/* Rutas protegidas - requieren autenticación, redirigen a /login si no está logueado */}
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/maps" element={<ProtectedRoute><Maps /></ProtectedRoute>} />
+          <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+        <Route path="/terms" element={<ProtectedRoute><Terms /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+        <Route path="/editProfile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+
+          {/* Ruta de administrador */}
+          <Route path="/admin/sites" element={<ProtectedRoute><AdminSites /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+        </Routes>
+      </MainContainer>
+    </>
+  );
+}
 
 function AppRouter() {
   return (
     <BrowserRouter>
-      <Sidebar />
-
-      <MainContainer>
-      <Routes>
-        {/* Ruta pública - Landing page */}
-        <Route path="/" element={<Welcome />} />
-        
-        {/* Rutas de autenticación */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Rutas protegidas - requieren autenticación */}
-        <Route path="/home" element={<Home />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/maps" element={<Maps />} />
-        <Route path="/locations" element={<Locations />} />
-        <Route path="/profile" element={<Profile />} />
-
-      </Routes>
-           </MainContainer>
+      <AppContent />
     </BrowserRouter>
   );
 }
+
 const MainContainer = styled.main`
-  padding: 20px;
+  padding: ${({ isPublicRoute }) => (isPublicRoute ? '0' : '20px')};
 
   @media (min-width: 1024px) {
-    margin-left: 240px; /* Solo en desktop */
+    margin-left: ${({ isPublicRoute }) => (isPublicRoute ? '0' : '240px')}; /* Solo en desktop */
   }
 `;
 

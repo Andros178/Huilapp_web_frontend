@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Camera, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
@@ -411,391 +411,403 @@ const ModalButtonContainer = styled.div`
 
 // Main Component
 export default function Register() {
-    const navigate = useNavigate();
-    const { register, registerWithPhoto } = useAuth();
-    
-    const [formData, setFormData] = useState({
-        nombre: '',
-        apellidos: '',
-        email: '',
-        telefono: '',
-        password: '',
-        confirmPassword: '',
-    });
+  const navigate = useNavigate();
+  const { register, registerWithPhoto } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+    password: '',
+    confirmPassword: '',
+  });
 
-    const [foto, setFoto] = useState(null);
-    const [fotoPreview, setFotoPreview] = useState(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [isLoading, setIsLoading] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [showExistingUserModal, setShowExistingUserModal] = useState(false);
+  const [foto, setFoto] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showExistingUserModal, setShowExistingUserModal] = useState(false);
 
-    const validateNombre = (value) => {
-        if (!value.trim()) return 'El nombre es requerido';
-        if (value.length > 60) return 'El nombre no puede exceder 60 caracteres';
-        return '';
-    };
+  const validateNombre = (value) => {
+    if (!value.trim()) return 'El nombre es requerido';
+    if (value.length > 60) return 'El nombre no puede exceder 60 caracteres';
+    return '';
+  };
 
-    const validateApellidos = (value) => {
-        if (!value.trim()) return 'Los apellidos son requeridos';
-        if (value.length > 60) return 'Los apellidos no pueden exceder 60 caracteres';
-        return '';
-    };
+  const validateApellidos = (value) => {
+    if (!value.trim()) return 'Los apellidos son requeridos';
+    if (value.length > 60) return 'Los apellidos no pueden exceder 60 caracteres';
+    return '';
+  };
 
-    const validateEmail = (value) => {
-        if (!value.trim()) return 'El email es requerido';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return 'Por favor ingresa un correo electrónico válido';
-        return '';
-    };
+  const validateEmail = (value) => {
+    if (!value.trim()) return 'El email es requerido';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) return 'Por favor ingresa un correo electrónico válido';
+    return '';
+  };
 
-    const validateTelefono = (value) => {
-        if (!value.trim()) return 'El teléfono es requerido';
-        const phoneRegex = /^\d+$/;
-        if (!phoneRegex.test(value)) return 'El teléfono debe contener solo números';
-        if (value.length !== 10) return 'El teléfono debe tener exactamente 10 dígitos';
-        return '';
-    };
+  const validateTelefono = (value) => {
+    if (!value.trim()) return 'El teléfono es requerido';
+    const phoneRegex = /^\d+$/;
+    if (!phoneRegex.test(value)) return 'El teléfono debe contener solo números';
+    if (value.length !== 10) return 'El teléfono debe tener exactamente 10 dígitos';
+    return '';
+  };
 
-    const validatePassword = (value) => {
-        if (!value.trim()) return 'La contraseña es requerida';
-        if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
-        return '';
-    };
+  const validatePassword = (value) => {
+    if (!value.trim()) return 'La contraseña es requerida';
+    if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    return '';
+  };
 
-    const validateConfirmPassword = (value, password) => {
-        if (!value.trim()) return 'Confirmar contraseña es requerido';
-        if (value !== password) return 'Las contraseñas no coinciden';
-        return '';
-    };
+  const validateConfirmPassword = (value, password) => {
+    if (!value.trim()) return 'Confirmar contraseña es requerido';
+    if (value !== password) return 'Las contraseñas no coinciden';
+    return '';
+  };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
 
-        // Clear error for this field when user starts typing
-        if (errors[name]) {
-            setErrors({ ...errors, [name]: '' });
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setFoto(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          setFotoPreview(event.target.result);
         }
-    };
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    const handlePhotoUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFoto(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setFotoPreview(event.target?.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const newErrors = {};
 
-        // Validate all fields
-        const newErrors = {};
+    const nombreError = validateNombre(formData.nombre);
+    if (nombreError) newErrors.nombre = nombreError;
 
-        if (validateNombre(formData.nombre)) newErrors.nombre = validateNombre(formData.nombre);
-        if (validateApellidos(formData.apellidos)) newErrors.apellidos = validateApellidos(formData.apellidos);
-        if (validateEmail(formData.email)) newErrors.email = validateEmail(formData.email);
-        if (validateTelefono(formData.telefono)) newErrors.telefono = validateTelefono(formData.telefono);
-        if (validatePassword(formData.password)) newErrors.password = validatePassword(formData.password);
-        if (validateConfirmPassword(formData.confirmPassword, formData.password))
-            newErrors.confirmPassword = validateConfirmPassword(formData.confirmPassword, formData.password);
+    const apellidosError = validateApellidos(formData.apellidos);
+    if (apellidosError) newErrors.apellidos = apellidosError;
 
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
 
-        setIsLoading(true);
+    const telefonoError = validateTelefono(formData.telefono);
+    if (telefonoError) newErrors.telefono = telefonoError;
 
-        try {
-            // Si hay foto, usar registerWithPhoto con FormData
-            if (foto) {
-                const formDataToSend = new FormData();
-                formDataToSend.append('nombre', formData.nombre);
-                formDataToSend.append('apellidos', formData.apellidos);
-                formDataToSend.append('email', formData.email);
-                formDataToSend.append('telefono', formData.telefono);
-                formDataToSend.append('contrasena', formData.password);  // ✅ Cambiar a "contrasena"
-                formDataToSend.append('foto', foto);
-                
-                await registerWithPhoto(formDataToSend);
-            } else {
-                // Sin foto, enviar solo JSON
-                await register({
-                    nombre: formData.nombre,
-                    apellidos: formData.apellidos,
-                    email: formData.email,
-                    telefono: formData.telefono,
-                    contrasena: formData.password,  // ✅ Cambiar a "contrasena"
-                });
-            }
-            
-            // Si el registro es exitoso, mostrar modal de éxito
-            setShowSuccessModal(true);
-        } catch (error) {
-            // Manejar diferentes tipos de errores
-            const errorMessage = error.message || 'Error desconocido';
-            
-            // Si el error indica que el usuario ya existe
-            if (errorMessage.toLowerCase().includes('exist') || 
-                errorMessage.toLowerCase().includes('ya registrado')) {
-                setShowExistingUserModal(true);
-            } else {
-                // Cualquier otro error
-                setShowErrorModal(true);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
 
-    const handleSuccessModalClick = () => {
-        navigate('/login');
-    };
-
-    const handleExistingUserLoginClick = () => {
-        navigate('/login');
-    };
-
-    const handleLoginClick = () => {
-        navigate('/login');
-    };
-
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-    };
-
-    const toggleConfirmPasswordVisibility = () => {
-        setShowConfirmPassword(!showConfirmPassword);
-    };
-
-    return (
-        <PageContainer>
-            {/* Header */}
-            <Header>
-                <Logo>HuilApp</Logo>
-                <NavButton onClick={handleLoginClick}>Iniciar sesión</NavButton>
-            </Header>
-
-            {/* Register Container */}
-            <RegisterContainer>
-                <FormSection>
-                    <Form onSubmit={handleSubmit}>
-                        <FormTitle>Registrarse</FormTitle>
-                        <FormSubtitle>Crea tu nueva cuenta</FormSubtitle>
-
-                        {/* Two Column Grid for Name and Surname */}
-                        <InputGrid>
-                            <InputGroup>
-                                <Label htmlFor="nombre">Nombre</Label>
-                                <Input
-                                    id="nombre"
-                                    name="nombre"
-                                    type="text"
-                                    placeholder="Nombre"
-                                    value={formData.nombre}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.nombre && <WarningMessage>{errors.nombre}</WarningMessage>}
-                            </InputGroup>
-
-                            <InputGroup>
-                                <Label htmlFor="apellidos">Apellidos</Label>
-                                <Input
-                                    id="apellidos"
-                                    name="apellidos"
-                                    type="text"
-                                    placeholder="Apellidos"
-                                    value={formData.apellidos}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.apellidos && <WarningMessage>{errors.apellidos}</WarningMessage>}
-                            </InputGroup>
-                        </InputGrid>
-
-                        {/* Email and Phone in Grid */}
-                        <InputGrid>
-                            <InputGroup>
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="Correo electrónico"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.email && <WarningMessage>{errors.email}</WarningMessage>}
-                            </InputGroup>
-
-                            <InputGroup>
-                                <Label htmlFor="telefono">Teléfono</Label>
-                                <Input
-                                    id="telefono"
-                                    name="telefono"
-                                    type="tel"
-                                    placeholder="Teléfono"
-                                    value={formData.telefono}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.telefono && <WarningMessage>{errors.telefono}</WarningMessage>}
-                            </InputGroup>
-                        </InputGrid>
-
-                        {/* Password and Confirm Password in Grid */}
-                        <InputGrid>
-                            <InputGroup>
-                                <Label htmlFor="password">Contraseña</Label>
-                                <PasswordInputWrapper>
-                                    <PasswordInput
-                                        id="password"
-                                        name="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder="Contraseña"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                    />
-                                    <PasswordToggleButton
-                                        type="button"
-                                        onClick={togglePasswordVisibility}
-                                        aria-label="Mostrar/ocultar contraseña"
-                                    >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </PasswordToggleButton>
-                                </PasswordInputWrapper>
-                                {errors.password && <WarningMessage>{errors.password}</WarningMessage>}
-                            </InputGroup>
-
-                            <InputGroup>
-                                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                                <PasswordInputWrapper>
-                                    <PasswordInput
-                                        id="confirmPassword"
-                                        name="confirmPassword"
-                                        type={showConfirmPassword ? 'text' : 'password'}
-                                        placeholder="Confirmar contraseña"
-                                        value={formData.confirmPassword}
-                                        onChange={handleInputChange}
-                                    />
-                                    <PasswordToggleButton
-                                        type="button"
-                                        onClick={toggleConfirmPasswordVisibility}
-                                        aria-label="Mostrar/ocultar contraseña"
-                                    >
-                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </PasswordToggleButton>
-                                </PasswordInputWrapper>
-                                {errors.confirmPassword && <WarningMessage>{errors.confirmPassword}</WarningMessage>}
-                            </InputGroup>
-                        </InputGrid>
-
-                        {/* Photo Upload */}
-                        <PhotoUploadSection>
-                            <HiddenFileInput
-                                id="photoInput"
-                                type="file"
-                                accept="image/*"
-                                onChange={handlePhotoUpload}
-                            />
-                            <PhotoUploadButton
-                                type="button"
-                                onClick={() => document.getElementById('photoInput')?.click()}
-                            >
-                                <Camera />
-                                Añadir foto
-                            </PhotoUploadButton>
-                            {fotoPreview && <PhotoPreview src={fotoPreview} alt="Vista previa de foto" />}
-                        </PhotoUploadSection>
-
-                        {/* Legal Text */}
-                        <LegalText>
-                            Al registrarte, aceptas nuestros{' '}
-                            <LegalLink href="#terms">Términos y condiciones</LegalLink> y{' '}
-                            <LegalLink href="#privacy">Política de privacidad</LegalLink>
-                        </LegalText>
-
-                        {/* Submit Button */}
-                        <SubmitButton type="submit" disabled={isLoading}>
-                            {isLoading ? 'Cargando...' : 'Regístrate'}
-                        </SubmitButton>
-
-                        {/* Login Link */}
-                        <LoginPrompt>
-                            ¿Ya tienes una cuenta? <span onClick={handleLoginClick}>Iniciar sesión</span>
-                        </LoginPrompt>
-                    </Form>
-                </FormSection>
-            </RegisterContainer>
-
-            {/* Success Modal */}
-            {showSuccessModal && (
-                <ModalOverlay onClick={() => setShowSuccessModal(false)}>
-                    <ModalContent onClick={(e) => e.stopPropagation()}>
-                        <ModalIcon>
-                            <CheckCircle color="#16a34a" />
-                        </ModalIcon>
-                        <ModalTitle>¡Registro exitoso!</ModalTitle>
-                        <ModalMessage>Tu cuenta ha sido creada correctamente</ModalMessage>
-                        <ModalButtonContainer>
-                            <ModalButtonPrimary onClick={handleSuccessModalClick}>
-                                Ir al inicio
-                            </ModalButtonPrimary>
-                        </ModalButtonContainer>
-                    </ModalContent>
-                </ModalOverlay>
-            )}
-
-            {/* Error Modal */}
-            {showErrorModal && (
-                <ModalOverlay onClick={() => setShowErrorModal(false)}>
-                    <ModalContent onClick={(e) => e.stopPropagation()}>
-                        <ModalIcon>
-                            <XCircle color="#dc2626" />
-                        </ModalIcon>
-                        <ModalTitle>Error en el registro</ModalTitle>
-                        <ModalMessage>
-                            Ocurrió un error al crear tu cuenta. Por favor intenta nuevamente
-                        </ModalMessage>
-                        <ModalButtonContainer>
-                            <ModalButtonPrimary onClick={() => setShowErrorModal(false)}>
-                                Cerrar
-                            </ModalButtonPrimary>
-                        </ModalButtonContainer>
-                    </ModalContent>
-                </ModalOverlay>
-            )}
-
-            {/* Existing User Modal */}
-            {showExistingUserModal && (
-                <ModalOverlay onClick={() => setShowExistingUserModal(false)}>
-                    <ModalContent onClick={(e) => e.stopPropagation()}>
-                        <ModalIcon>
-                            <AlertCircle color="#f59e0b" />
-                        </ModalIcon>
-                        <ModalTitle>Usuario ya registrado</ModalTitle>
-                        <ModalMessage>Ya existe una cuenta con este correo electrónico</ModalMessage>
-                        <ModalButtonContainer>
-                            <ModalButtonPrimary onClick={handleExistingUserLoginClick}>
-                                Iniciar sesión
-                            </ModalButtonPrimary>
-                            <ModalButtonSecondary onClick={() => setShowExistingUserModal(false)}>
-                                Cerrar
-                            </ModalButtonSecondary>
-                        </ModalButtonContainer>
-                    </ModalContent>
-                </ModalOverlay>
-            )}
-
-            {/* Footer */}
-            <Footer />
-        </PageContainer>
+    const confirmPasswordError = validateConfirmPassword(
+      formData.confirmPassword,
+      formData.password
     );
+    if (confirmPasswordError) newErrors.confirmPassword = confirmPasswordError;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // generar "usuario" a partir del email (antes del @)
+    const username = formData.email.includes('@')
+      ? formData.email.split('@')[0]
+      : formData.email;
+
+    try {
+      if (foto) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('nombre', formData.nombre);
+        formDataToSend.append('apellidos', formData.apellidos);
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('telefono', formData.telefono);
+        formDataToSend.append('contrasena', formData.password);  // back espera "contrasena"
+        formDataToSend.append('usuario', username);               // back espera "usuario"
+        formDataToSend.append('profile_picture', foto);           // nombre igual que en upload.single('profile_picture')
+
+        await registerWithPhoto(formDataToSend);
+      } else {
+        await register({
+          usuario: username,                // back espera "usuario"
+          nombre: formData.nombre,
+          apellidos: formData.apellidos,
+          email: formData.email,
+          telefono: formData.telefono,
+          contrasena: formData.password,    // back espera "contrasena"
+        });
+      }
+
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errorMessage = (error && error.message) || 'Error desconocido';
+
+      if (
+        errorMessage.toLowerCase().includes('exist') ||
+        errorMessage.toLowerCase().includes('ya registrado')
+      ) {
+        setShowExistingUserModal(true);
+      } else {
+        setShowErrorModal(true);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSuccessModalClick = () => {
+    navigate('/login');
+  };
+
+  const handleExistingUserLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(prev => !prev);
+  };
+
+  return (
+    <PageContainer>
+      <Header>
+        <Logo>HuilApp</Logo>
+        <NavButton onClick={handleLoginClick}>Iniciar sesión</NavButton>
+      </Header>
+
+      <RegisterContainer>
+        <FormSection>
+          <Form onSubmit={handleSubmit}>
+            <FormTitle>Registrarse</FormTitle>
+            <FormSubtitle>Crea tu nueva cuenta</FormSubtitle>
+
+            <InputGrid>
+              <InputGroup>
+                <Label htmlFor="nombre">Nombre</Label>
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  type="text"
+                  placeholder="Nombre"
+                  value={formData.nombre}
+                  onChange={handleInputChange}
+                />
+                {errors.nombre && <WarningMessage>{errors.nombre}</WarningMessage>}
+              </InputGroup>
+
+              <InputGroup>
+                <Label htmlFor="apellidos">Apellidos</Label>
+                <Input
+                  id="apellidos"
+                  name="apellidos"
+                  type="text"
+                  placeholder="Apellidos"
+                  value={formData.apellidos}
+                  onChange={handleInputChange}
+                />
+                {errors.apellidos && <WarningMessage>{errors.apellidos}</WarningMessage>}
+              </InputGroup>
+            </InputGrid>
+
+            <InputGrid>
+              <InputGroup>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Correo electrónico"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+                {errors.email && <WarningMessage>{errors.email}</WarningMessage>}
+              </InputGroup>
+
+              <InputGroup>
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono"
+                  name="telefono"
+                  type="tel"
+                  placeholder="Teléfono"
+                  value={formData.telefono}
+                  onChange={handleInputChange}
+                />
+                {errors.telefono && <WarningMessage>{errors.telefono}</WarningMessage>}
+              </InputGroup>
+            </InputGrid>
+
+            <InputGrid>
+              <InputGroup>
+                <Label htmlFor="password">Contraseña</Label>
+                <PasswordInputWrapper>
+                  <PasswordInput
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Contraseña"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                  />
+                  <PasswordToggleButton
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    aria-label="Mostrar/ocultar contraseña"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </PasswordToggleButton>
+                </PasswordInputWrapper>
+                {errors.password && <WarningMessage>{errors.password}</WarningMessage>}
+              </InputGroup>
+
+              <InputGroup>
+                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                <PasswordInputWrapper>
+                  <PasswordInput
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirmar contraseña"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                  />
+                  <PasswordToggleButton
+                    type="button"
+                    onClick={toggleConfirmPasswordVisibility}
+                    aria-label="Mostrar/ocultar contraseña"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </PasswordToggleButton>
+                </PasswordInputWrapper>
+                {errors.confirmPassword && (
+                  <WarningMessage>{errors.confirmPassword}</WarningMessage>
+                )}
+              </InputGroup>
+            </InputGrid>
+
+            <PhotoUploadSection>
+              <HiddenFileInput
+                id="photoInput"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+              />
+              <PhotoUploadButton
+                type="button"
+                onClick={() => document.getElementById('photoInput')?.click()}
+              >
+                <Camera />
+                Añadir foto
+              </PhotoUploadButton>
+              {fotoPreview && (
+                <PhotoPreview src={fotoPreview} alt="Vista previa de foto" />
+              )}
+            </PhotoUploadSection>
+
+            <LegalText>
+              Al registrarte, aceptas nuestros{' '}
+              <LegalLink href="#terms">Términos y condiciones</LegalLink> y{' '}
+              <LegalLink href="#privacy">Política de privacidad</LegalLink>
+            </LegalText>
+
+            <SubmitButton type="submit" disabled={isLoading}>
+              {isLoading ? 'Cargando...' : 'Regístrate'}
+            </SubmitButton>
+
+            <LoginPrompt>
+              ¿Ya tienes una cuenta?{' '}
+              <span onClick={handleLoginClick}>Iniciar sesión</span>
+            </LoginPrompt>
+          </Form>
+        </FormSection>
+      </RegisterContainer>
+
+      {showSuccessModal && (
+        <ModalOverlay onClick={() => setShowSuccessModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>
+              <CheckCircle color="#16a34a" />
+            </ModalIcon>
+            <ModalTitle>¡Registro exitoso!</ModalTitle>
+            <ModalMessage>Tu cuenta ha sido creada correctamente</ModalMessage>
+            <ModalButtonContainer>
+              <ModalButtonPrimary onClick={handleSuccessModalClick}>
+                Ir al inicio
+              </ModalButtonPrimary>
+            </ModalButtonContainer>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      {showErrorModal && (
+        <ModalOverlay onClick={() => setShowErrorModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>
+              <XCircle color="#dc2626" />
+            </ModalIcon>
+            <ModalTitle>Error en el registro</ModalTitle>
+            <ModalMessage>
+              Ocurrió un error al crear tu cuenta. Por favor intenta nuevamente
+            </ModalMessage>
+            <ModalButtonContainer>
+              <ModalButtonPrimary onClick={() => setShowErrorModal(false)}>
+                Cerrar
+              </ModalButtonPrimary>
+            </ModalButtonContainer>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      {showExistingUserModal && (
+        <ModalOverlay onClick={() => setShowExistingUserModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>
+              <AlertCircle color="#f59e0b" />
+            </ModalIcon>
+            <ModalTitle>Usuario ya registrado</ModalTitle>
+            <ModalMessage>
+              Ya existe una cuenta con este correo electrónico
+            </ModalMessage>
+            <ModalButtonContainer>
+              <ModalButtonPrimary onClick={handleExistingUserLoginClick}>
+                Iniciar sesión
+              </ModalButtonPrimary>
+              <ModalButtonSecondary
+                onClick={() => setShowExistingUserModal(false)}
+              >
+                Cerrar
+              </ModalButtonSecondary>
+            </ModalButtonContainer>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      <Footer />
+    </PageContainer>
+  );
 }
