@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import iconNavbar from "../assets/images/navbar.png";
-import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser } from "react-icons/fi";
+import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser, FiPlus } from "react-icons/fi";
 import logoutIcon from "../assets/images/Vector.png";
 
 const parseJwt = (token) => {

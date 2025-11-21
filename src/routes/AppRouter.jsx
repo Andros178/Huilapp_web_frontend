@@ -7,6 +7,7 @@ import Home from "../pages/home/Home";
 import Chat from "../pages/chat/Chat";
 import Maps from "../pages/map/Maps";
 import Locations from "../pages/locations/Locations";
+import AddSite from "../pages/sites/AddSite";
 import Login from '../pages/login/Login';
 import Register from '../pages/register/register';
 import Profile from "../pages/profile/Profile";
@@ -31,6 +32,7 @@ function AppRouter() {
           <Route path="/home" element={<Home />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/maps" element={<Maps />} />
+          <Route path="/sites/add" element={<AddSite />} />
           <Route path="/locations" element={<Locations />} />
           <Route path="/profile" element={<Profile />} />
 

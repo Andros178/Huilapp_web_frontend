@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import apiService from '../../services/api.service';
+import AddSiteForm from '../sites/AddSiteForm';
 
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
@@ -22,6 +23,8 @@ export default function Maps() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [categoriesTree, setCategoriesTree] = useState([]);
+  const [initialCategories, setInitialCategories] = useState([]);
+  const [initialCategoriesTree, setInitialCategoriesTree] = useState([]);
   const [petFriendly, setPetFriendly] = useState(false);
   const [kidsFriendly, setKidsFriendly] = useState(false);
   const mapRef = useRef(null);
@@ -55,7 +58,12 @@ export default function Maps() {
       }
       // derive categories for filter select
       const catSet = new Set((data || []).map(d => d.categoria).filter(Boolean));
-      setCategories(Array.from(catSet));
+      const catList = Array.from(catSet);
+      setCategories(catList);
+      // preserve the full list/tree on first successful load so filters don't disappear
+      if (!initialCategories || initialCategories.length === 0) {
+        setInitialCategories(catList);
+      }
 
       // build categories tree with subcategories
       const treeMap = new Map();
@@ -92,6 +100,9 @@ export default function Maps() {
         subcategorias: Array.from(subsSet)
       }));
       setCategoriesTree(finalTree);
+      if (!initialCategoriesTree || initialCategoriesTree.length === 0) {
+        setInitialCategoriesTree(finalTree);
+      }
     } catch (err) {
       // keep previous data on error
     }
@@ -114,13 +125,47 @@ export default function Maps() {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(mapRef.current);
       markersGroupRef.current = L.layerGroup().addTo(mapRef.current);
+      // ensure map layout is correct after being added to the DOM
+      setTimeout(() => {
+        try { mapRef.current.invalidateSize(); } catch (e) {}
+      }, 200);
+      // keep map responsive
+      const onResize = () => { try { mapRef.current && mapRef.current.invalidateSize(); } catch (e) {} };
+      window.addEventListener('resize', onResize);
+      // store listener so we can remove later if needed
+      mapRef.current.__onResize = onResize;
     }
-
     // update view when center changes
     if (mapRef.current && center) {
       mapRef.current.setView(center, mapRef.current.getZoom());
     }
+
+    return () => {
+      // remove resize listener if present
+      try {
+        if (mapRef.current && mapRef.current.__onResize) window.removeEventListener('resize', mapRef.current.__onResize);
+      } catch (e) {}
+    };
   }, [center]);
+
+  // Adjust Leaflet zoom control vertical offset so it doesn't sit at the very top edge
+  useEffect(() => {
+    const styleId = 'huilapp-leaflet-zoom-style';
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      /* default small offset for mobile */
+      .leaflet-top .leaflet-control-zoom { top: 88px !important; }
+
+      /* on desktop, push zoom controls further down to clear header and controls bar */
+      @media (min-width: 1024px) {
+        .leaflet-top .leaflet-control-zoom { top: 140px !important; }
+      }
+    `;
+    document.head.appendChild(style);
+    // keep style persistent across navigation (do not remove on unmount)
+  }, []);
 
   useEffect(() => {
     // update markers when sites change
@@ -228,6 +273,7 @@ export default function Maps() {
 
   const [showFilters, setShowFilters] = useState(false);
   const dropdownRef = useRef(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   // close dropdown on outside click
   useEffect(() => {
     function onDocClick(e) {
@@ -275,20 +321,15 @@ export default function Maps() {
   return (
     <PageContainer>
       <MapWrapper>
-        <RegisterButton onClick={() => window.location.href = '/register'}>
-          <PlusCircle>+</PlusCircle>
-          <span>Registrar un sitio</span>
-        </RegisterButton>
-
         <ControlsBar>
           <FilterToggle onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} aria-label="Abrir filtros">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 12h6" stroke="#0b9f88" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M15 6h6" stroke="#0b9f88" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M9 18h12" stroke="#0b9f88" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="6" cy="6" r="1.6" fill="#0b9f88" />
-              <circle cx="12" cy="12" r="1.6" fill="#0b9f88" />
-              <circle cx="18" cy="18" r="1.6" fill="#0b9f88" />
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+              <path d="M3 12h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M15 6h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M9 18h12" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="6" cy="6" r="1.6" fill="#fff" />
+              <circle cx="12" cy="12" r="1.6" fill="#fff" />
+              <circle cx="18" cy="18" r="1.6" fill="#fff" />
             </svg>
           </FilterToggle>
 
@@ -304,11 +345,27 @@ export default function Maps() {
 
         </ControlsBar>
 
+        {/* Registrar sitio: centered under the controls/search bar */}
+        <AddSiteButton onClick={() => setShowAddModal(true)}>
+          <PlusCircle>+</PlusCircle>
+          <span>Registrar un sitio</span>
+        </AddSiteButton>
+        {showAddModal && (
+          <ModalOverlay onClick={() => setShowAddModal(false)}>
+            <ModalCard onClick={(e) => e.stopPropagation()}>
+              <h3>Registrar un sitio</h3>
+              <AddSiteForm onSuccess={() => setShowAddModal(false)} onCancel={() => setShowAddModal(false)} />
+            </ModalCard>
+          </ModalOverlay>
+        )}
+
         {showFilters && (
           <Dropdown ref={dropdownRef}>
             <FilterBox>
               <CategoryList>
-                {categoriesTree.map(catObj => (
+                {(
+                  (initialCategoriesTree && initialCategoriesTree.length) ? initialCategoriesTree : categoriesTree
+                ).map(catObj => (
                   <CategoryItem key={catObj.categoria}>
                       <CategoryHeader onClick={() => toggleCategory(catObj.categoria)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -341,7 +398,7 @@ export default function Maps() {
                 <label>Categoría</label>
                 <select value={category} onChange={(e) => setCategory(e.target.value)}>
                   <option value="">Todas</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {((initialCategories && initialCategories.length) ? initialCategories : categories).map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Row>
 
@@ -380,6 +437,25 @@ function escapeHtml(unsafe) {
 const PageContainer = styled.div`
   display: flex;
   height: calc(100vh - 48px);
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 9999;
+`;
+
+const ModalCard = styled.div`
+  width: 720px;
+  max-width: 95%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
 `;
 
 const SidePanel = styled.aside`
@@ -481,8 +557,6 @@ const SiteItem = styled.button`
 
 const RegisterButton = styled.button`
   position: absolute;
-  left: 24px;
-  top: 24px;
   z-index: 400;
   background: #0b9f88;
   color: white;
@@ -518,10 +592,39 @@ const ControlsBar = styled.div`
   padding: 8px 12px;
   border-radius: 24px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+
+  @media (min-width: 1024px) {
+    /* reduce left gap from sidebar and add top spacing on desktop */
+    top: 34px;
+    left: 300px; /* sidebar width (260) + gap (~40px) */
+    transform: none;
+  }
+`;
+
+const AddSiteButton = styled(RegisterButton)`
+  top: 86px; /* slightly lower to sit under controls */
+  left: 50%;
+  transform: translateX(calc(-50% - 120px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 520; /* ensure it's above controls and map layers */
+  background: #0b9f88;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(11,159,136,0.18);
+
+  @media (min-width: 1024px) {
+    /* align under the adjusted ControlsBar on desktop */
+    top: 108px;
+    left: 300px;
+    transform: none;
+  }
 `;
 
 const SearchInput = styled.input`
-  width: 420px;
+  width: 480px;
   padding: 10px 12px;
   border-radius: 18px;
   border: 1px solid #e6e6e6;
@@ -541,11 +644,11 @@ const FiltersInline = styled.div`
 const FilterToggle = styled.button`
   width:40px;
   height:40px;
-  border-radius:12px;
+  border-radius:999px;
   border:none;
-  background:#fff;
+  background:#0b9f88;
   box-shadow:0 6px 16px rgba(0,0,0,0.06);
-  display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700; color: #fff;
   svg { width:18px; height:18px }
 `;
 
