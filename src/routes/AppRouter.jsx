@@ -32,7 +32,7 @@ function AppContent() {
 
   return (
     <>
-      <Sidebar />
+      {!isPublicRoute && <Sidebar />}
       <MainContainer isPublicRoute={isPublicRoute}>
         <Routes>
           {/* Ruta pública - Landing page */}
