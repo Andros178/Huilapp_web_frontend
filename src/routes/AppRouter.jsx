@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ProtectedRoute from "../components/ProtectedRoute";
+import PublicRoute from "../components/PublicRoute";
 import styled from "styled-components";
 
 import Welcome from "../pages/welcome";
@@ -36,27 +38,27 @@ function AppContent() {
           {/* Ruta pública - Landing page */}
           <Route path="/" element={<Welcome />} />
           
-          {/* Rutas de autenticación */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<RecoverPassword />} />
-          <Route path="/verify-code" element={<VerifyCode />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Rutas de autenticación - redirigen a /home si ya está logueado */}
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><RecoverPassword /></PublicRoute>} />
+          <Route path="/verify-code" element={<PublicRoute><VerifyCode /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           
-          {/* Rutas protegidas - requieren autenticación */}
-          <Route path="/home" element={<Home />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/maps" element={<Maps />} />
-          <Route path="/locations" element={<Locations />} />
-          <Route path="/profile" element={<Profile />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/security" element={<Security />} />
-        <Route path="/editProfile" element={<EditProfile />} />
+          {/* Rutas protegidas - requieren autenticación, redirigen a /login si no está logueado */}
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/maps" element={<ProtectedRoute><Maps /></ProtectedRoute>} />
+          <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+        <Route path="/terms" element={<ProtectedRoute><Terms /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+        <Route path="/editProfile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
 
           {/* Ruta de administrador */}
-          <Route path="/admin/sites" element={<AdminSites />} />
-          <Route path="/admin/users" element={<Users />} />
+          <Route path="/admin/sites" element={<ProtectedRoute><AdminSites /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
         </Routes>
       </MainContainer>
     </>
