@@ -117,6 +117,36 @@ export default function Maps() {
     return () => { mounted = false; };
   }, []);
 
+  // Try to obtain browser geolocation on mount and center the map there
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+    let mounted = true;
+    const onSuccess = (pos) => {
+      if (!mounted) return;
+      try {
+        const { latitude, longitude } = pos.coords;
+        // prefer user's location as initial center
+        setCenter([latitude, longitude]);
+      } catch (e) {
+        // ignore
+      }
+    };
+    const onError = (err) => {
+      // swallow errors, keep fallback/derived center
+      try { console.warn('Geolocation error', err); } catch (e) {}
+    };
+
+    try {
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+        enableHighAccuracy: true,
+        maximumAge: 60000,
+        timeout: 7000,
+      });
+    } catch (e) {}
+
+    return () => { mounted = false; };
+  }, []);
+
   useEffect(() => {
     // initialize map once
     if (!mapRef.current) {
@@ -320,6 +350,7 @@ export default function Maps() {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const toggleCategory = (cat) => {
     setExpandedCats(prev => {
@@ -417,6 +448,38 @@ export default function Maps() {
     } finally {
       setSubmittingReview(false);
       setLoadingReviews(false);
+    }
+  }
+
+  // Handler for 'Centrarme' button: request current position and center map
+  function locateMe() {
+    if (!('geolocation' in navigator)) {
+      try { console.warn('Geolocation not supported'); } catch (e) {}
+      return;
+    }
+    setLocating(true);
+    const onSuccess = (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords;
+        setCenter([latitude, longitude]);
+        if (mapRef.current) {
+          try {
+            mapRef.current.setView([latitude, longitude], 14);
+            // pan a bit so selected panel does not overlap marker (if present)
+            setTimeout(() => { try { mapRef.current.panBy([-180, 0]); } catch (e) {} }, 220);
+          } catch (e) {}
+        }
+      } catch (e) {}
+      setLocating(false);
+    };
+    const onError = (err) => {
+      try { console.warn('Geolocation error', err); } catch (e) {}
+      setLocating(false);
+    };
+    try {
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    } catch (e) {
+      setLocating(false);
     }
   }
 
@@ -527,6 +590,10 @@ export default function Maps() {
             />
             <SearchBtn aria-label="Buscar" onClick={() => fetchSites({ q: query })}>Buscar</SearchBtn>
           </SearchWrapper>
+
+              <LocateBtn onClick={() => locateMe()} aria-label="Centrarme" title="Centrarme">
+                {locating ? '⏳' : '📍'}
+              </LocateBtn>
 
         </ControlsBar>
 
@@ -952,6 +1019,22 @@ const SearchBtn = styled.button`
   border-radius: 14px;
   cursor: pointer;
   font-weight:600;
+`;
+
+const LocateBtn = styled.button`
+  margin-left: 8px;
+  background: #fff;
+  color: #0b9f88;
+  border: 1px solid #0b9f88;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  height:40px;
 `;
 
 // tweak dropdown card to look like mockup

@@ -14,7 +14,7 @@ import imgNevado from '../../assets/images/sitios/Nevado.jpg';
 import imgBetania from '../../assets/images/sitios/Betania.jpg';
 import imgGuacharo from '../../assets/images/sitios/Guacharo.jpg';
 import imgPitalito from '../../assets/images/sitios/Pitalito.jpg';
-import imgBambuco from '../../assets/images/eventos/Bambuco.jpg';
+import imgBambuco from '../../assets/images/eventos/Bambuco.JPG';
 import imgJagua from '../../assets/images/eventos/Jagua.jpeg';
 import imgJunero from '../../assets/images/eventos/Junero.jpg';
 
