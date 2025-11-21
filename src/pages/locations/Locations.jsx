@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 
 const PRIMARY = "#008073";
 const API_BASE = "https://huilapp-backend.onrender.com/sites";
@@ -263,6 +264,18 @@ const MessageBox = styled.div`
 
 const Locations = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Parse query params to support deep links from the map
+  const queryParams = React.useMemo(() => {
+    const p = new URLSearchParams(location.search);
+    return {
+      q: p.get('q') || '',
+      categoria: p.get('categoria') || '',
+      pet: p.get('pet') || '',
+      kids: p.get('kids') || ''
+    };
+  }, [location.search]);
 
   const [allSites, setAllSites] = useState([]);
   const [siteList, setSiteList] = useState([]);
@@ -275,6 +288,8 @@ const Locations = () => {
   const [petFilter, setPetFilter] = useState(false);
 
   const [error, setError] = useState(null);
+
+  const API_PUBLIC = "https://huilapp-backend.onrender.com/sites";
 
   /* ==========================
      Cargar MIS SITIOS
@@ -302,8 +317,30 @@ const Locations = () => {
   }
 
   useEffect(() => {
-    loadMySites();
-  }, []);
+    // If the page was opened with query params, load public sites matching them
+    const { q, categoria, pet, kids } = queryParams;
+    if (q || categoria || pet || kids) {
+      // fetch public sites
+      (async () => {
+        try {
+          const params = new URLSearchParams();
+          if (q) params.append('q', q);
+          if (categoria) params.append('categoria', categoria);
+          if (pet) params.append('pet_friendly', pet);
+          if (kids) params.append('kids_friendly', kids);
+          const res = await fetch(`${API_PUBLIC}?${params.toString()}`);
+          const data = await res.json();
+          const arr = Array.isArray(data) ? data : [];
+          setAllSites(arr);
+          setSiteList(arr);
+        } catch (e) {
+          setError('Error cargando sitios públicos.');
+        }
+      })();
+    } else {
+      loadMySites();
+    }
+  }, [queryParams]);
 
   /* ==========================
      Filtrar en el frontend
