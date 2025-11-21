@@ -353,17 +353,9 @@ export default function RecoverPassword() {
         try {
             // Solicitar restablecimiento de contraseña al backend
             await apiService.post('/users/request-password-reset', { email })
-            
-            // Si llega aquí, el usuario existe
-            // Generate 4-digit verification code
-            const verificationCode = Math.floor(Math.random() * 10000)
-                .toString()
-                .padStart(4, "0")
-            console.log("Código de verificación:", verificationCode)
 
             // Save email and code to localStorage
             localStorage.setItem("recoveryEmail", email)
-            localStorage.setItem("verificationCode", verificationCode)
 
             setShowSuccessModal(true)
         } catch (error) {
