@@ -176,23 +176,7 @@ export default function Maps() {
     sites.forEach(site => {
       if (!site.latitud || !site.longitud) return;
       const marker = L.marker([site.latitud, site.longitud], { icon: getIconForSite(site) });
-      const popupEl = document.createElement('div');
-      popupEl.style.minWidth = '200px';
-      popupEl.innerHTML = `
-        <div>
-          <h4 style="margin:0">${escapeHtml(site.nombre || '')}</h4>
-          <p style="margin:6px 0">${escapeHtml(site.categoria || '')}</p>
-        </div>
-      `;
-      if (site.fotos && site.fotos.length) {
-        const img = document.createElement('img');
-        img.src = site.fotos[0];
-        img.alt = site.nombre || '';
-        img.style.width = '100%';
-        img.style.borderRadius = '6px';
-        popupEl.appendChild(img);
-      }
-      marker.bindPopup(popupEl);
+      // remove in-map popup: we now show details in the right-side panel
       marker.on('click', () => setSelected(site));
       marker.addTo(group);
     });
@@ -267,9 +251,18 @@ export default function Maps() {
 
   useEffect(() => {
     if (selected && selected.latitud && selected.longitud && mapRef.current) {
-      mapRef.current.setView([selected.latitud, selected.longitud], 14);
+      try {
+        // center on the site; after layout changes (panel open) invalidate size
+        mapRef.current.setView([selected.latitud, selected.longitud], 14);
+        // pan slightly to the left so the marker remains visible under the overlay panel
+        setTimeout(() => {
+          try { mapRef.current.panBy([-180, 0]); } catch (e) {}
+          try { mapRef.current.invalidateSize(); } catch (e) {}
+        }, 260);
+      } catch (e) {}
     }
   }, [selected]);
+
 
   const [showFilters, setShowFilters] = useState(false);
   const dropdownRef = useRef(null);
@@ -321,6 +314,12 @@ export default function Maps() {
 
   // state to manage expanded categories in dropdown
   const [expandedCats, setExpandedCats] = useState(new Set());
+  const [detailTab, setDetailTab] = useState('summary');
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const toggleCategory = (cat) => {
     setExpandedCats(prev => {
@@ -338,6 +337,89 @@ export default function Maps() {
     setShowFilters(false);
   };
 
+  // Helper to get stable site id
+  function getSiteId(site) {
+    return site?.id || site?.id_sitio || site?._id || site?.idSitio || null;
+  }
+
+  // Load reviews when the reviews tab is opened
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      if (detailTab !== 'reviews' || !selected) return;
+      setLoadingReviews(true);
+      setReviews([]);
+      const siteId = getSiteId(selected);
+      if (!siteId) {
+        setLoadingReviews(false);
+        return;
+      }
+      const tryPaths = [
+        `/resenas/sitio/${siteId}`,
+        `/resenas?id_sitio=${siteId}`,
+        `/resenas?site=${siteId}`,
+        `/sites/${siteId}/reviews`,
+        `/reviews?site=${siteId}`,
+        `/sites/${siteId}` // fallback: site detail may contain embedded reviews
+      ];
+      let got = null;
+      for (const p of tryPaths) {
+        try {
+          const resp = await apiService.get(p);
+          if (!mounted) return;
+          // If we got an array, assume it's reviews
+          if (Array.isArray(resp)) { got = resp; break; }
+          // If response has data array (axios style)
+          if (resp && Array.isArray(resp.data)) { got = resp.data; break; }
+          // If resp is an object and contains reviews field
+          if (resp && (resp.reviews || resp.reseñas || resp.resenas || resp.resenas_list)) {
+            got = resp.reviews || resp.reseñas || resp.resenas || resp.resenas_list; break;
+          }
+          // If site detail returned, try to extract reviews
+          if (resp && resp.fotos !== undefined) {
+            // no explicit reviews, continue
+            continue;
+          }
+        } catch (err) {
+          // ignore and try next
+        }
+      }
+      if (mounted) {
+        setReviews(got || []);
+        setLoadingReviews(false);
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, [detailTab, selected]);
+
+  async function submitReview() {
+    const siteId = getSiteId(selected);
+    if (!siteId) return;
+    if (!reviewText.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const payload = { id_sitio: siteId, calificacion: Number(reviewRating), texto: reviewText.trim() };
+      await apiService.post('/resenas', payload);
+      // refresh
+      setReviewText(''); setReviewRating(5);
+      setDetailTab('reviews');
+      // reload reviews
+      setLoadingReviews(true);
+      try {
+        const resp = await apiService.get(`/resenas/sitio/${siteId}`);
+        setReviews(Array.isArray(resp) ? resp : (resp?.data || resp?.resenas || resp?.reseñas || []));
+      } catch (e) {
+        // ignore
+      }
+    } catch (err) {
+      console.error('Error sending review', err);
+    } finally {
+      setSubmittingReview(false);
+      setLoadingReviews(false);
+    }
+  }
+
   // Small helper to map category names to icons (using emoji as lightweight icons)
   const getCategoryIcon = (cat) => {
     if (!cat) return '📍';
@@ -350,6 +432,24 @@ export default function Maps() {
     if (c.includes('mascota') || c.includes('pet')) return '🐾';
     return '📌';
   };
+
+  // Reviews UI helpers
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString();
+    } catch (e) { return dateStr; }
+  }
+
+  function renderStars(n) {
+    const num = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(<Star key={i} filled={i <= num}>★</Star>);
+    }
+    return <span>{stars}</span>;
+  }
 
   return (
     <PageContainer>
@@ -449,6 +549,106 @@ export default function Maps() {
         
 
         <div id="huilapp-map" style={{ height: '100%', width: '100%' }} />
+
+        {selected && (
+          <DetailPanel role="region" aria-label="Detalle del sitio">
+            <DetailHeader>
+              <BackBtn onClick={() => setSelected(null)}>‹</BackBtn>
+              <h3>{selected.nombre || selected.name || 'Sitio'}</h3>
+            </DetailHeader>
+
+            <DetailBody>
+              {selected.fotos && selected.fotos.length ? (
+                <DetailImage src={selected.fotos[0]} alt={selected.nombre || ''} />
+              ) : (
+                <ImagePlaceholder>No image</ImagePlaceholder>
+              )}
+
+              <MetaRow>
+                <div className="category">{selected.categoria || ''}</div>
+                <div className="rating">{(selected.avg_rating || selected.rating) ? `${Number(selected.avg_rating || selected.rating).toFixed(1)} ★` : ''}</div>
+              </MetaRow>
+
+              <Tabs>
+                <Tab active={detailTab === 'summary'} onClick={() => setDetailTab('summary')}>Resumen</Tab>
+                <Tab active={detailTab === 'reviews'} onClick={() => setDetailTab('reviews')}>Reseñas</Tab>
+              </Tabs>
+
+              {detailTab === 'summary' && (
+                <>
+                  <Description>{selected.descripcion || selected.description || 'Sin descripción'}</Description>
+
+                  <InfoList>
+                    {selected.direccion && <InfoItem>📍 {selected.direccion}</InfoItem>}
+                    {selected.telefono && <InfoItem>📞 {selected.telefono}</InfoItem>}
+                    <InfoItem>{selected.kids_friendly ? 'Apto para niños' : 'No apto para niños'}</InfoItem>
+                    <InfoItem>{selected.pet_friendly ? 'Apto para mascotas' : 'No apto para mascotas'}</InfoItem>
+                  </InfoList>
+                </>
+              )}
+
+              {detailTab === 'reviews' && (
+                <div>
+                  <div style={{ marginTop: 6 }}>
+                    {loadingReviews ? (
+                      <div> Cargando reseñas... </div>
+                    ) : (
+                      <div>
+                        {reviews.length === 0 ? <div>No hay reseñas aún.</div> : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <ReviewList>
+                              {reviews.map((r, idx) => {
+                                const id = r.id_resena || r.id || idx;
+                                const author = r.autor || r.autor_nombre || r.nombre || 'Anónimo';
+                                const rating = Number(r.rating || r.calificacion || r.calif) || 0;
+                                const text = r.comment || r.texto || r.comentario || '';
+                                const date = formatDate(r.created_at || r.fecha || r.date);
+                                const initials = (author || 'A').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
+                                return (
+                                  <ReviewItem key={id}>
+                                    <Avatar aria-hidden>{initials}</Avatar>
+                                    <ReviewContent>
+                                      <ReviewHeaderRow>
+                                        <AuthorName>{author}</AuthorName>
+                                        <DateText>{date}</DateText>
+                                      </ReviewHeaderRow>
+                                      <StarRow>{renderStars(rating)} <RatingValue>{rating ? `${rating.toFixed(1)} ★` : ''}</RatingValue></StarRow>
+                                      {text && <ReviewText>{text}</ReviewText>}
+                                      <ReviewActions>
+                                        <ActionButton className="danger">Eliminar</ActionButton>
+                                        <ActionButton>Editar</ActionButton>
+                                      </ReviewActions>
+                                    </ReviewContent>
+                                  </ReviewItem>
+                                );
+                              })}
+                            </ReviewList>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <hr style={{ margin: '12px 0' }} />
+                  <div>
+                    <h4 style={{ margin: '6px 0' }}>Escribe una reseña</h4>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                      <label style={{ fontWeight:600 }}>Puntuación</label>
+                      <select value={reviewRating} onChange={(e) => setReviewRating(Number(e.target.value))}>
+                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} ★</option>)}
+                      </select>
+                    </div>
+                    <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} style={{ width: '100%', minHeight: 80, padding:8, borderRadius:8, border:'1px solid #e6e6e6' }} />
+                    <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:8 }}>
+                      <button className="secondary" onClick={() => { setReviewText(''); setReviewRating(5); }}>Cancelar</button>
+                      <button onClick={() => submitReview()} disabled={submittingReview}>{submittingReview ? 'Enviando...' : 'Enviar reseña'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DetailBody>
+          </DetailPanel>
+        )}
 
       </MapWrapper>
     </PageContainer>
@@ -806,4 +1006,87 @@ const SubItem = styled.button`
   &:hover { background:#f6f7f8 }
   &.empty { color:#888; font-style:italic }
   span.icon { width:22px; text-align:center }
+`;
+
+/* Details panel shown when a site is selected */
+const DetailPanel = styled.aside`
+  position: fixed;
+  right: 40px;
+  top:20px; /* below header */
+  bottom: 10px;
+  width: 360px;
+  height: calc(100vh - 56px);
+  background: #fff;
+  border-radius: 30px; /* panel (no rounded card) */
+  box-shadow: -8px 0 24px rgba(0,0,0,0.08);
+  z-index: 980;
+  overflow: hidden;
+  display:flex;
+  flex-direction:column;
+`;
+
+const DetailHeader = styled.div`
+  display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid #f0f0f0;
+  h3 { margin:0; font-size:16px }
+`;
+
+const BackBtn = styled.button`
+  width:36px; height:36px; border-radius:8px; border:none; background:#f3f3f3; cursor:pointer; font-size:22px; line-height:1; display:inline-flex; align-items:center; justify-content:center;
+`;
+
+const DetailBody = styled.div`
+  padding:12px; overflow:auto; display:flex; flex-direction:column; gap:10px;
+`;
+
+const DetailImage = styled.img`
+  width:100%; height:160px; object-fit:cover; border-radius:8px; background:#eee;
+`;
+
+const ImagePlaceholder = styled.div`
+  width:100%; height:160px; border-radius:8px; background:#efefef; display:flex; align-items:center; justify-content:center; color:#888;
+`;
+
+const MetaRow = styled.div`
+  display:flex; justify-content:space-between; align-items:center; font-weight:600; color:#333;
+`;
+
+const Tabs = styled.div`display:flex; gap:8px; margin-top:4px;`;
+const Tab = styled.div`padding:6px 10px; border-radius:8px; background:${p => p.active ? '#0b9f88' : '#fff'}; color:${p => p.active ? '#fff' : '#333'}; border:1px solid #e6e6e6; font-weight:600;`;
+
+const Description = styled.div`font-size:13px; color:#444; line-height:1.4;`;
+
+const InfoList = styled.ul`list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; margin-top:8px;`;
+const InfoItem = styled.li`font-size:14px; color:#333;`;
+
+/* Reviews styles */
+const ReviewList = styled.div`
+  display:flex; flex-direction:column; gap:12px; margin-top:6px;
+`;
+
+const ReviewItem = styled.div`
+  display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:10px; background:#fff; border:1px solid #f3f3f3;
+`;
+
+const Avatar = styled.div`
+  width:44px; height:44px; border-radius:50%; background:linear-gradient(180deg,#f6f6f8,#efefef); display:flex; align-items:center; justify-content:center; font-weight:700; color:#444; flex:0 0 44px;
+`;
+
+const ReviewContent = styled.div`flex:1; display:flex; flex-direction:column; gap:6px;`;
+
+const ReviewHeaderRow = styled.div`display:flex; justify-content:space-between; align-items:center; gap:8px;`;
+
+const AuthorName = styled.div`font-weight:700; font-size:14px; color:#222;`;
+const DateText = styled.div`font-size:12px; color:#888;`;
+
+const StarRow = styled.div`display:flex; align-items:center; gap:8px; font-size:14px;`;
+const Star = styled.span`
+  color: ${p => p.filled ? '#ffb74d' : '#e6e6e6'}; font-size:16px; line-height:1;
+`;
+const RatingValue = styled.span`font-size:13px; color:#444; margin-left:6px;`;
+
+const ReviewText = styled.div`font-size:13px; color:#444; line-height:1.4;`;
+
+const ReviewActions = styled.div`display:flex; gap:8px; justify-content:flex-end; margin-top:6px;`;
+const ActionButton = styled.button`
+  padding:6px 10px; border-radius:8px; border:1px solid #e6e6e6; background: ${p => p.className && p.className.includes('danger') ? '#fff' : '#fff'}; color: ${p => p.className && p.className.includes('danger') ? '#e05555' : '#0b9f88'}; cursor:pointer; font-weight:600;
 `;
