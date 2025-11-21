@@ -9,7 +9,12 @@ import Maps from "../pages/map/Maps";
 import Locations from "../pages/locations/Locations";
 import Login from '../pages/login/Login';
 import Register from '../pages/register/register';
+
 import Profile from "../pages/profile/Profile";
+import Help from "../pages/profile/Help";
+import Terms from "../pages/profile/Terms";
+import Security from "../pages/profile/Security";
+import EditProfile from "../pages/profile/EditProfile";
 
 function AppRouter() {
   return (
@@ -31,6 +36,10 @@ function AppRouter() {
         <Route path="/maps" element={<Maps />} />
         <Route path="/locations" element={<Locations />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/security" element={<Security />} />
+        <Route path="/editProfile" element={<EditProfile />} />
 
       </Routes>
            </MainContainer>
