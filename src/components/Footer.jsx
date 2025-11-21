@@ -89,6 +89,9 @@ const MapSection = styled.div`
   margin-top: 30px;
   padding-top: 30px;
   border-top: 1px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const MapImage = styled.img`
@@ -165,9 +168,12 @@ export default function Footer() {
             />
             <FooterLink href="tel:+573016046969">+57 301 604-6969</FooterLink>
           </FooterText>
+        </FooterSection>
+
+        <FooterSection>
           <MapSection>
             <MapImage
-              src="/placeholder.svg?height=100&width=150"
+              src="src\assets\images\navbar.PNG?height=100&width=150"
               alt="Mapa del Huila"
               loading="lazy"
             />

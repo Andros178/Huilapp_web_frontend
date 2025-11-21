@@ -143,34 +143,21 @@ const HeroImage = styled.div`
   justify-content: center;
   align-items: center;
 
-  @media (max-width: 1024px) {
-    width: 100%;
-  }
-`;
-
-const HeroImageWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  aspect-ratio: 1;
-  background-color: #0d9488;
-  transform: rotate(45deg);
-  border-radius: 40px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   img {
-    width: 90%;
-    height: 90%;
-    object-fit: cover;
-    transform: rotate(-45deg);
+    width: 100%;
+    max-width: 100%;
+    height: auto;
     border-radius: 20px;
   }
 
+  @media (max-width: 1024px) {
+    width: 100%;
+  }
+
   @media (max-width: 768px) {
-    max-width: 300px;
+    img {
+      max-width: 300px;
+    }
   }
 `;
 
@@ -358,7 +345,7 @@ const ServiceCardTitle = styled.h4`
 
 const CTASection = styled.section`
   background-color: #1a1a1a;
-  background-image: url("/placeholder.svg?height=400&width=1200");
+  background-image: url("src/assets/images/desierto_cactus.png?height=400&width=1200");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -535,18 +522,16 @@ export default function Welcome() {
                         Explora rutas, hospedajes, restaurantes y mucho más desde nuestra
                         plataforma interactiva.
                     </HeroSubtitle>
-                    <PrimaryButton onClick={() => navigate("/locations")}>
+                    <PrimaryButton onClick={() => navigate("/login")}>
                         Explorar destinos
                     </PrimaryButton>
                 </HeroContent>
                 <HeroImage>
-                    <HeroImageWrapper>
-                        <img
-                            src="/placeholder.svg?height=300&width=300"
-                            alt="Desierto de Tatacoa"
-                            loading="lazy"
-                        />
-                    </HeroImageWrapper>
+                    <img
+                        src="src\assets\images\hero_section.png?height=300&width=300"
+                        alt="Desierto de Tatacoa"
+                        loading="lazy"
+                    />
                 </HeroImage>
             </HeroSection>
 
@@ -572,7 +557,7 @@ export default function Welcome() {
                     </PromotionContent>
                     <PromotionImage>
                         <img
-                            src="/placeholder.svg?height=400&width=250"
+                            src="src\assets\images\app_screenshots.png?height=400&width=250"
                             alt="App Screenshots"
                             loading="lazy"
                         />
@@ -586,7 +571,7 @@ export default function Welcome() {
                 <ServicesGrid>
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="src\assets\images\servicios\hoteles_y_hospedajes.png"
                             alt="Hoteles"
                             loading="lazy"
                         />
@@ -599,7 +584,7 @@ export default function Welcome() {
 
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="src\assets\images\servicios\restaurante.png?height=100&width=100"
                             alt="Restaurantes"
                             loading="lazy"
                         />
@@ -612,7 +597,7 @@ export default function Welcome() {
 
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="src\assets\images\servicios\mapa.png?height=100&width=100"
                             alt="Mapa GPS"
                             loading="lazy"
                         />
@@ -623,7 +608,7 @@ export default function Welcome() {
 
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="src\assets\images\servicios\chat.png?height=100&width=100"
                             alt="Chatbot"
                             loading="lazy"
                         />
@@ -636,7 +621,7 @@ export default function Welcome() {
 
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="src\assets\images\servicios\rutas.png?height=100&width=100"
                             alt="Rutas"
                             loading="lazy"
                         />
@@ -647,7 +632,7 @@ export default function Welcome() {
 
                     <ServiceCard>
                         <ServiceCardImage
-                            src="/placeholder.svg?height=100&width=100"
+                            src="/src\assets\images\servicios\resena.png?height=100&width=100"
                             alt="Reseñas"
                             loading="lazy"
                         />
@@ -677,7 +662,7 @@ export default function Welcome() {
                 <VideoContainer>
                     <VideoPlaceholder>
                         <img
-                            src="/placeholder.svg?height=400&width=600"
+                            src="src\assets\images\huila_video.jpg?height=400&width=600"
                             alt="Huila Video"
                             loading="lazy"
                         />
