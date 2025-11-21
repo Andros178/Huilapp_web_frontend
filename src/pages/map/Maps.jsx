@@ -273,18 +273,51 @@ export default function Maps() {
 
   const [showFilters, setShowFilters] = useState(false);
   const dropdownRef = useRef(null);
+  const filterWrapperRef = useRef(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const modalPushedRef = useRef(false);
   // close dropdown on outside click
   useEffect(() => {
     function onDocClick(e) {
       if (!showFilters) return;
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowFilters(false);
-      }
+      // keep open when clicking anywhere inside the filter wrapper (toggle + dropdown)
+      if (filterWrapperRef.current && filterWrapperRef.current.contains(e.target)) return;
+      // otherwise close
+      setShowFilters(false);
     }
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [showFilters]);
+
+  // Manage modal history so browser back closes modal instead of navigating away
+  useEffect(() => {
+    function onPop(e) {
+      if (showAddModal) {
+        // close modal when user presses back
+        closeAddModal(true);
+      }
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [showAddModal]);
+
+  function openAddModal() {
+    setShowAddModal(true);
+    try {
+      // push a new history entry so back button will trigger popstate
+      window.history.pushState({ huilappModal: 'addSite' }, '');
+      modalPushedRef.current = true;
+    } catch (e) {}
+  }
+
+  function closeAddModal(fromPopstate = false) {
+    setShowAddModal(false);
+    if (modalPushedRef.current && !fromPopstate) {
+      // if we pushed a state when opening, go back to remove it
+      try { window.history.back(); } catch (e) {}
+    }
+    modalPushedRef.current = false;
+  }
 
   // state to manage expanded categories in dropdown
   const [expandedCats, setExpandedCats] = useState(new Set());
@@ -322,18 +355,70 @@ export default function Maps() {
     <PageContainer>
       <MapWrapper>
         <ControlsBar>
-          <FilterToggle onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} aria-label="Abrir filtros">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
-              <path d="M3 12h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M15 6h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M9 18h12" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="6" cy="6" r="1.6" fill="#fff" />
-              <circle cx="12" cy="12" r="1.6" fill="#fff" />
-              <circle cx="18" cy="18" r="1.6" fill="#fff" />
-            </svg>
-          </FilterToggle>
+          <FilterWrapper ref={filterWrapperRef}>
+            <FilterToggle onClick={() => setShowFilters(s => !s)} aria-expanded={showFilters} aria-label="Abrir filtros">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                <path d="M3 12h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M15 6h6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M9 18h12" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="6" cy="6" r="1.6" fill="#fff" />
+                <circle cx="12" cy="12" r="1.6" fill="#fff" />
+                <circle cx="18" cy="18" r="1.6" fill="#fff" />
+              </svg>
+            </FilterToggle>
 
-          <SearchWrapper>
+            {showFilters && (
+              <Dropdown ref={dropdownRef} role="dialog" aria-label="Filtro de sitios">
+                <FilterBox>
+                  <CategoryList>
+                    {(
+                      (initialCategoriesTree && initialCategoriesTree.length) ? initialCategoriesTree : categoriesTree
+                    ).map(catObj => (
+                      <CategoryItem key={catObj.categoria}>
+                          <CategoryHeader onClick={() => toggleCategory(catObj.categoria)}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 18 }}>{getCategoryIcon(catObj.categoria)}</span>
+                              <div>{catObj.categoria}</div>
+                            </div>
+                            <div>{expandedCats.has(catObj.categoria) ? '▾' : '▸'}</div>
+                          </CategoryHeader>
+                        {expandedCats.has(catObj.categoria) && (
+                          <SubList>
+                            {catObj.subcategorias.length === 0 && <SubItem className="empty">(sin subcategorías)</SubItem>}
+                            {catObj.subcategorias.map(sub => (
+                              <SubItem key={sub} onClick={() => onSelectSubcategory(catObj.categoria, sub)}>
+                                <span className="icon">•</span>
+                                <span>{sub}</span>
+                              </SubItem>
+                            ))}
+                          </SubList>
+                        )}
+                      </CategoryItem>
+                    ))}
+                  </CategoryList>
+
+                  <ToggleRow>
+                    <ToggleButton active={petFriendly} onClick={() => setPetFriendly(p => !p)} aria-pressed={petFriendly}>
+                      <span style={{ fontSize: 18 }}>🐾</span>
+                      <div>Apto para mascotas</div>
+                    </ToggleButton>
+                    <ToggleButton active={kidsFriendly} onClick={() => setKidsFriendly(k => !k)} aria-pressed={kidsFriendly}>
+                      <span style={{ fontSize: 18 }}>🧒</span>
+                      <div>Apto para niños</div>
+                    </ToggleButton>
+                  </ToggleRow>
+
+                  <Buttons>
+                    <button onClick={() => { applyFilters(); setShowFilters(false); }}>Buscar</button>
+                    <button className="secondary" onClick={() => { resetFilters(); setShowFilters(false); }}>Restablecer</button>
+                  </Buttons>
+                </FilterBox>
+              </Dropdown>
+            )}
+
+          </FilterWrapper>
+
+            <SearchWrapper>
             <SearchIcon>🔍</SearchIcon>
             <SearchInput
               placeholder="Buscar por nombre o categoría"
@@ -346,77 +431,22 @@ export default function Maps() {
         </ControlsBar>
 
         {/* Registrar sitio: centered under the controls/search bar */}
-        <AddSiteButton onClick={() => setShowAddModal(true)}>
-          <PlusCircle>+</PlusCircle>
-          <span>Registrar un sitio</span>
-        </AddSiteButton>
+        {!showFilters && (
+          <AddSiteButton onClick={() => openAddModal()}>
+            <PlusCircle>+</PlusCircle>
+            <span>Registrar un sitio</span>
+          </AddSiteButton>
+        )}
         {showAddModal && (
-          <ModalOverlay onClick={() => setShowAddModal(false)}>
+          <ModalOverlay onClick={() => closeAddModal()}>
             <ModalCard onClick={(e) => e.stopPropagation()}>
               <h3>Registrar un sitio</h3>
-              <AddSiteForm onSuccess={() => setShowAddModal(false)} onCancel={() => setShowAddModal(false)} />
+              <AddSiteForm onSuccess={() => closeAddModal()} onCancel={() => closeAddModal()} />
             </ModalCard>
           </ModalOverlay>
         )}
 
-        {showFilters && (
-          <Dropdown ref={dropdownRef}>
-            <FilterBox>
-              <CategoryList>
-                {(
-                  (initialCategoriesTree && initialCategoriesTree.length) ? initialCategoriesTree : categoriesTree
-                ).map(catObj => (
-                  <CategoryItem key={catObj.categoria}>
-                      <CategoryHeader onClick={() => toggleCategory(catObj.categoria)}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 18 }}>{getCategoryIcon(catObj.categoria)}</span>
-                          <div>{catObj.categoria}</div>
-                        </div>
-                        <div>{expandedCats.has(catObj.categoria) ? '▾' : '▸'}</div>
-                      </CategoryHeader>
-                    {expandedCats.has(catObj.categoria) && (
-                      <SubList>
-                        {catObj.subcategorias.length === 0 && <SubItem className="empty">(sin subcategorías)</SubItem>}
-                        {catObj.subcategorias.map(sub => (
-                          <SubItem key={sub} onClick={() => onSelectSubcategory(catObj.categoria, sub)}>
-                            <span className="icon">•</span>
-                            <span>{sub}</span>
-                          </SubItem>
-                        ))}
-                      </SubList>
-                    )}
-                  </CategoryItem>
-                ))}
-              </CategoryList>
-
-              <Row>
-                <label>Buscar</label>
-                <input placeholder="Texto" value={query} onChange={(e) => onSearchChange(e.target.value)} />
-              </Row>
-
-              <Row>
-                <label>Categoría</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  <option value="">Todas</option>
-                    {((initialCategories && initialCategories.length) ? initialCategories : categories).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </Row>
-
-              <Row>
-                <label><input type="checkbox" checked={petFriendly} onChange={(e) => setPetFriendly(e.target.checked)} /> Apto para mascotas</label>
-              </Row>
-
-              <Row>
-                <label><input type="checkbox" checked={kidsFriendly} onChange={(e) => setKidsFriendly(e.target.checked)} /> Apto para niños</label>
-              </Row>
-
-              <Buttons>
-                <button onClick={() => { applyFilters(); setShowFilters(false); }}>Buscar</button>
-                <button className="secondary" onClick={() => { resetFilters(); setShowFilters(false); }}>Restablecer</button>
-              </Buttons>
-            </FilterBox>
-          </Dropdown>
-        )}
+        
 
         <div id="huilapp-map" style={{ height: '100%', width: '100%' }} />
 
@@ -446,16 +476,26 @@ const ModalOverlay = styled.div`
   display:flex;
   align-items:center;
   justify-content:center;
+  padding: 20px; /* ensure spacing on small screens */
   z-index: 9999;
 `;
 
 const ModalCard = styled.div`
-  width: 720px;
+  width: 480px;
   max-width: 95%;
   background: #fff;
   border-radius: 12px;
-  padding: 18px;
+  padding: 14px;
   box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  max-height: 80vh; /* constrain height so modal stays compact */
+  overflow-y: auto; /* enable internal scrolling for long forms */
+
+  /* ensure good spacing on very small screens */
+  @media (max-width: 600px) {
+    width: 100%;
+    max-height: 100vh;
+    padding: 12px;
+  }
 `;
 
 const SidePanel = styled.aside`
@@ -504,6 +544,26 @@ const Buttons = styled.div`
   margin-top:10px;
   button { padding:8px 12px; border-radius:8px; border: none; cursor: pointer; background:#0b9f88; color:#fff }
   button.secondary { background:transparent; color:#0b9f88; border:1px solid #0b9f88 }
+`;
+
+const ToggleRow = styled.div`
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+`;
+
+const ToggleButton = styled.button`
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:8px;
+  border: 1px solid ${props => props.active ? '#0b9f88' : '#e6e6e6'};
+  background: ${props => props.active ? 'linear-gradient(90deg,#0bb39f,#0b9f88)' : '#fff'};
+  color: ${props => props.active ? '#fff' : '#333'};
+  cursor:pointer;
+  font-weight:600;
+  min-width: 140px;
 `;
 
 const Header = styled.div`
@@ -601,6 +661,11 @@ const ControlsBar = styled.div`
   }
 `;
 
+const FilterWrapper = styled.div`
+  position: relative; /* dropdown positioned absolutely relative to this */
+  display: inline-block;
+`;
+
 const AddSiteButton = styled(RegisterButton)`
   top: 86px; /* slightly lower to sit under controls */
   left: 50%;
@@ -654,10 +719,9 @@ const FilterToggle = styled.button`
 
 const Dropdown = styled.div`
   position: absolute;
-  top: 64px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 460;
+  top: calc(100% + 8px); /* place directly below the filter button */
+  left: 0;
+  z-index: 560; /* ensure dropdown appears above other floating controls (e.g. AddSiteButton) */
   width: 360px;
   max-height: 60vh;
   overflow: auto;
