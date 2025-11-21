@@ -41,7 +41,7 @@ const Home = () => {
         <HeroContent>
           <HeroTitle>Explora el corazón del Huila</HeroTitle>
           <HeroSubtitle>Encuentra destinos, rutas, eventos y experiencias únicas</HeroSubtitle>
-          <HeroButton onClick={() => navigate("/Maps")}>Ver Mapa <ArrowRight /></HeroButton>
+          <HeroButton onClick={() => navigate("/maps")}>Ver Mapa <ArrowRight /></HeroButton>
         </HeroContent>
       </Hero>
 
@@ -51,7 +51,7 @@ const Home = () => {
           <ExploraText>
             <SectionTitle>Explora el Huila</SectionTitle>
             <SectionParagraph>Vive experiencias únicas recorriendo los paisajes cafeteros, montañas, ríos y culturas locales que hacen del Huila un destino inolvidable.</SectionParagraph>
-            <SmallButton onClick={() => navigate("/Maps")}>Explorar <ChevronRight /></SmallButton>
+            <SmallButton onClick={() => navigate("/maps")}>Explorar <ChevronRight /></SmallButton>
           </ExploraText>
         </Explora>
       </Section>
@@ -75,7 +75,7 @@ const Home = () => {
           <IAIcon><Compass style={{ color: '#008073' }} size={40} /></IAIcon>
           <SectionTitle>Planificación con Inteligencia Artificial</SectionTitle>
           <SectionParagraph>Obtén recomendaciones automáticas basadas en tus intereses y ubicación.</SectionParagraph>
-          <HeroButton style={{ margin: '0 auto', backgroundColor: '#008073', color: '#fff' }} onClick={() => navigate("/Chat")}>Probar IA</HeroButton>
+          <HeroButton style={{ margin: '0 auto', backgroundColor: '#008073', color: '#fff' }} onClick={() => navigate("/chat")}>Probar IA</HeroButton>
         </IABox>
       </SectionGray>
 
@@ -98,7 +98,7 @@ const Home = () => {
         <SectionTitle style={{color:'#fff'}}>Planifica tu viaje</SectionTitle>
         <PlanificaGrid>
           {planifica.map((item, index) => (
-            <PlanBox key={index} onClick={() => navigate("/Maps")}> 
+            <PlanBox key={index} onClick={() => navigate("/maps")}> 
               <PlanIcon>{item.icon}</PlanIcon>
               <PlanTitle>{item.title}</PlanTitle>
             </PlanBox>
