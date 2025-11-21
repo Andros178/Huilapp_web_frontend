@@ -1,14 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import iconNavbar from "../assets/images/navbar.png";
-
-// ICONOS (puedes cambiarlos por los que quieras)
 import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser } from "react-icons/fi";
+import logoutIcon from "../assets/images/Vector.png";
+
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("Error al parsear JWT en Sidebar:", e);
+    return null;
+  }
+};
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
+
+  // 🔄 Se ejecuta cada vez que cambia la ruta
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const payload = parseJwt(token);
+    const admin =
+      payload && payload.rol && payload.rol.toLowerCase() === "administrador";
+    setIsAdmin(Boolean(admin));
+  }, [location.pathname]); // ⬅ antes estaba []
+
+  const sitesPath = isAdmin ? "/admin/sites" : "/locations";
+  const sitesLabel = isAdmin ? "Sitios (admin)" : "Mis sitios";
 
   return (
     <>
@@ -21,36 +55,71 @@ export default function Sidebar() {
 
         <Nav>
           <NavItem to="/home" active={location.pathname === "/home"}>
-            <IconWrapper className="icon-web"><FiHome size={20} /></IconWrapper>
+            <IconWrapper>
+              <FiHome size={20} />
+            </IconWrapper>
             Inicio
           </NavItem>
 
-          <NavItem to="/locations" active={location.pathname === "/locations"}>
-            <IconWrapper className="icon-web"><FiMapPin size={20} /></IconWrapper>
-            Mis sitios
+          <NavItem to={sitesPath} active={location.pathname === sitesPath}>
+            <IconWrapper>
+              <FiMapPin size={20} />
+            </IconWrapper>
+            {sitesLabel}
           </NavItem>
 
           <NavItem to="/maps" active={location.pathname === "/maps"}>
-            <IconWrapper className="icon-web"><FiMap size={20} /></IconWrapper>
+            <IconWrapper>
+              <FiMap size={20} />
+            </IconWrapper>
             Mapa interactivo
           </NavItem>
 
           <NavItem to="/chat" active={location.pathname === "/chat"}>
-            <IconWrapper className="icon-web"><FiMessageSquare size={20} /></IconWrapper>
+            <IconWrapper>
+              <FiMessageSquare size={20} />
+            </IconWrapper>
             Chat bot
           </NavItem>
 
           <NavItem to="/profile" active={location.pathname === "/profile"}>
-            <IconWrapper className="icon-web"><FiUser size={20} /></IconWrapper>
+            <IconWrapper>
+              <FiUser size={20} />
+            </IconWrapper>
             Perfil
           </NavItem>
         </Nav>
+
+        {/* ---------- BOTÓN DE CERRAR SESIÓN ---------- */}
+        <LogoutButton
+          onClick={async () => {
+            try {
+              await fetch("https://huilapp-backend.onrender.com/users/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+              });
+            } catch (e) {
+              console.error("Error en logout:", e);
+            }
+
+            localStorage.removeItem("token");
+            setIsOpen(false);
+            window.location.href = "/login";
+          }}
+        >
+          <LogoutIcon src={logoutIcon} alt="Cerrar sesión" />
+          <span>Cerrar sesión</span>
+        </LogoutButton>
       </SidebarContainer>
 
       {isOpen && <Overlay onClick={() => setIsOpen(false)} />}
     </>
   );
 }
+
+/* ======================================================= */
+/* ================== ESTILOS COMPLETOS =================== */
+/* ======================================================= */
 
 const SidebarContainer = styled.aside`
   position: fixed;
@@ -102,17 +171,15 @@ const NavItem = styled(Link)`
   display: flex;
   align-items: center;
   transition: all 0.25s ease;
+  gap: 12px;
 
   &:hover {
     background: ${({ active }) => (active ? "#008073" : "#e6f4f1")};
     color: ${({ active }) => (active ? "#ffffff" : "#008073")};
     transform: translateX(4px);
   }
-    
-  gap: 12px;
 `;
 
-/* Iconos visibles SOLO en pantallas grandes */
 const IconWrapper = styled.span`
   display: none;
 
@@ -120,6 +187,39 @@ const IconWrapper = styled.span`
     display: flex;
     align-items: center;
   }
+`;
+
+const LogoutButton = styled.button`
+  margin-top: 20px;
+  margin-left: 12px;
+  margin-right: 12px;
+  padding: 12px 16px;
+  width: calc(100% - 24px);
+  background: #ffe9e9;
+  color: #b80000;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  transition: 0.25s ease;
+
+  &:hover {
+    background: #ffcccc;
+    transform: translateX(4px);
+  }
+
+  span {
+    font-size: 18px;
+  }
+`;
+
+const LogoutIcon = styled.img`
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 `;
 
 const MenuButton = styled.button`
