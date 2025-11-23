@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import apiService from '../../services/api.service';
+import authService from '../../services/auth.service';
 import AddSiteForm from '../sites/AddSiteForm';
 
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
@@ -29,7 +30,12 @@ export default function Maps() {
   const [kidsFriendly, setKidsFriendly] = useState(false);
   const mapRef = useRef(null);
   const markersGroupRef = useRef(null);
+  const routeLayerRef = useRef(null);
   const searchDebounceRef = useRef(null);
+  const [directionsLoading, setDirectionsLoading] = useState(false);
+  const [directionsInfo, setDirectionsInfo] = useState(null);
+  const [currentPosition, setCurrentPosition] = useState(null);
+  const userMarkerRef = useRef(null);
 
   // Fetch sites with current filters
   const fetchSites = async (opts = {}) => {
@@ -170,6 +176,13 @@ export default function Maps() {
       mapRef.current.setView(center, mapRef.current.getZoom());
     }
 
+    // if currentPosition was set before map was initialized, add marker now
+    if (currentPosition && mapRef.current && !userMarkerRef.current) {
+      try {
+        userMarkerRef.current = L.circleMarker([currentPosition.latitude, currentPosition.longitude], { radius: 7, color: '#0b9f88', fillColor:'#0b9f88', fillOpacity:1 }).addTo(mapRef.current);
+      } catch (e) {}
+    }
+
     return () => {
       // remove resize listener if present
       try {
@@ -197,6 +210,16 @@ export default function Maps() {
     // keep style persistent across navigation (do not remove on unmount)
   }, []);
 
+  // global styles for site tooltip (map labels)
+  useEffect(() => {
+    const id = 'huilapp-site-tooltip-style';
+    if (document.getElementById(id)) return;
+    const s = document.createElement('style');
+    s.id = id;
+    s.innerHTML = `.site-tooltip { background: rgba(255,255,255,0.95); color: #222; border-radius:6px; padding:4px 8px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,0.12); border:1px solid rgba(0,0,0,0.06); }`;
+    document.head.appendChild(s);
+  }, []);
+
   useEffect(() => {
     // update markers when sites change
     const group = markersGroupRef.current;
@@ -208,6 +231,11 @@ export default function Maps() {
       const marker = L.marker([site.latitud, site.longitud], { icon: getIconForSite(site) });
       // remove in-map popup: we now show details in the right-side panel
       marker.on('click', () => setSelected(site));
+      // show permanent label with site name for clarity
+      try {
+        const title = site.nombre || site.name || '';
+        if (title) marker.bindTooltip(title, { permanent: true, direction: 'top', className: 'site-tooltip' });
+      } catch (e) {}
       marker.addTo(group);
     });
   }, [sites]);
@@ -293,6 +321,107 @@ export default function Maps() {
     }
   }, [selected]);
 
+  // clear route when panel closed or selected changes
+  useEffect(() => {
+    if (!selected) clearRoute();
+  }, [selected]);
+
+  // Draw route from user's current location to the selected site
+  function clearRoute() {
+    try {
+      if (routeLayerRef.current && mapRef.current) {
+        mapRef.current.removeLayer(routeLayerRef.current);
+      }
+    } catch (e) {}
+    routeLayerRef.current = null;
+  }
+
+  function showRouteOnMap(originLatLng, destLatLng) {
+    try {
+      clearRoute();
+      if (!mapRef.current) return;
+      const latlngs = [ [originLatLng.latitude, originLatLng.longitude], [destLatLng[0], destLatLng[1]] ];
+      const poly = L.polyline(latlngs, { color: '#0b9f88', weight: 5, opacity: 0.9 }).addTo(mapRef.current);
+      routeLayerRef.current = poly;
+      const bounds = poly.getBounds();
+      mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+    } catch (e) {
+      console.warn('Error drawing route', e);
+    }
+  }
+
+  // Request a driving route from OSRM (public demo server) and draw it
+  async function requestRoute(origin, destLatLng) {
+    // origin: { latitude, longitude }
+    // destLatLng: [lat, lng]
+    setDirectionsLoading(true);
+    setDirectionsInfo(null);
+    try {
+      const originStr = `${origin.longitude},${origin.latitude}`; // lon,lat
+      const destStr = `${destLatLng[1]},${destLatLng[0]}`; // lon,lat
+      const url = `https://router.project-osrm.org/route/v1/driving/${originStr};${destStr}?overview=full&geometries=geojson`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('OSRM route request failed');
+      const data = await resp.json();
+      if (!data || !data.routes || !data.routes.length) throw new Error('No route found');
+      const route = data.routes[0];
+      const coords = route.geometry && route.geometry.coordinates ? route.geometry.coordinates : null;
+      if (!coords) throw new Error('Route geometry missing');
+      // convert [lon,lat] -> [lat,lon]
+      const latlngs = coords.map(c => [c[1], c[0]]);
+      clearRoute();
+      const poly = L.polyline(latlngs, { color: '#0b9f88', weight: 6, opacity: 0.95 }).addTo(mapRef.current);
+      routeLayerRef.current = poly;
+      const bounds = poly.getBounds();
+      mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+      // set info (distance in meters, duration seconds) if available
+      setDirectionsInfo({ distance: route.distance || 0, duration: route.duration || 0 });
+    } catch (e) {
+      console.warn('Routing error', e);
+      // fallback: draw straight line
+      try { showRouteOnMap(origin, destLatLng); } catch (ee) {}
+      throw e;
+    } finally {
+      setDirectionsLoading(false);
+    }
+  }
+
+  function openGoogleMapsDirections(origin, dest) {
+    const originParam = `${origin.latitude},${origin.longitude}`;
+    const destParam = `${dest[0]},${dest[1]}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originParam)}&destination=${encodeURIComponent(destParam)}&travelmode=driving`;
+    window.open(url, '_blank');
+  }
+
+  function handleComoLlegar() {
+    if (!selected || !selected.latitud || !selected.longitud) return alert('Coordenadas del sitio no disponibles');
+    if (!('geolocation' in navigator)) return alert('Geolocalización no soportada en este navegador');
+    // get current position and request route (OSRM)
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const origin = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      setCurrentPosition(origin);
+      // add/update user marker
+      try {
+        if (userMarkerRef.current && mapRef.current) {
+          mapRef.current.removeLayer(userMarkerRef.current);
+        }
+        if (mapRef.current) {
+          userMarkerRef.current = L.circleMarker([origin.latitude, origin.longitude], { radius: 7, color: '#0b9f88', fillColor: '#0b9f88', fillOpacity: 1 }).addTo(mapRef.current);
+        }
+      } catch (e) {}
+      const dest = [Number(selected.latitud), Number(selected.longitud)];
+      try {
+        await requestRoute(origin, dest);
+      } catch (e) {
+        // inform user but keep fallback line drawn
+        alert('No se pudo obtener la ruta por calles. Se trazó una línea directa como fallback.');
+      }
+    }, (err) => {
+      try { console.warn('Geolocation error', err); } catch (e) {}
+      alert('No se pudo obtener tu ubicación');
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  }
+
 
   const [showFilters, setShowFilters] = useState(false);
   const dropdownRef = useRef(null);
@@ -350,6 +479,11 @@ export default function Maps() {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [editingSaving, setEditingSaving] = useState(false);
+  const [deletingReview, setDeletingReview] = useState(null);
+  const [deletingSaving, setDeletingSaving] = useState(false);
   const [locating, setLocating] = useState(false);
 
   const toggleCategory = (cat) => {
@@ -416,13 +550,125 @@ export default function Maps() {
         }
       }
       if (mounted) {
-        setReviews(got || []);
+        // normalize and attach avatars when possible
+        let enriched = (got || []).map(r => ({ ...r }));
+        try {
+          // fetch users once and build map for avatars
+          const users = await apiService.get('/users');
+          const usersMap = Array.isArray(users) ? users.reduce((m,u) => { m[u.id] = u; return m; }, {}) : {};
+          enriched = enriched.map(r => {
+            const uid = r.id_usuario || r.userId || r.usuario_id || r.id_usuario_resena;
+            const avatar = r.avatar || r.profile_picture || (uid && usersMap[uid] && usersMap[uid].profile_picture) || null;
+            return { ...r, avatar };
+          });
+        } catch (e) {
+          // ignore avatar enrichment errors
+        }
+
+        setReviews(enriched || []);
         setLoadingReviews(false);
       }
     }
     load();
     return () => { mounted = false; };
   }, [detailTab, selected]);
+
+  // Open edit modal for a given review
+  function openEditReview(review) {
+    if (!review) return;
+    const text = review.texto || review.comment || review.comentario || '';
+    setEditingReview(review);
+    setEditText(text);
+  }
+
+  async function saveEditedReview() {
+    if (!editingReview) return;
+    const id = editingReview.id || editingReview.id_resena || editingReview.id_resena || null;
+    if (!id) return alert('ID de reseña inválido');
+    setEditingSaving(true);
+    try {
+      await apiService.put(`/resenas/${id}`, { texto: editText });
+      // reload reviews for the current site
+      const siteId = getSiteId(selected);
+      if (siteId) {
+        setLoadingReviews(true);
+        try {
+          const resp = await apiService.get(`/resenas/sitio/${siteId}`);
+          const raw = Array.isArray(resp) ? resp : (resp?.data || resp?.resenas || resp?.reseñas || []);
+          // try to enrich avatars
+          try {
+            const users = await apiService.get('/users');
+            const usersMap = Array.isArray(users) ? users.reduce((m,u) => { m[u.id] = u; return m; }, {}) : {};
+            const enriched = (raw || []).map(r => {
+              const uid = r.id_usuario || r.userId || r.usuario_id;
+              const avatar = r.avatar || r.profile_picture || (uid && usersMap[uid] && usersMap[uid].profile_picture) || null;
+              return { ...r, avatar };
+            });
+            setReviews(enriched);
+          } catch (e) {
+            setReviews(raw || []);
+          }
+        } catch (e) {
+          // ignore
+        } finally {
+          setLoadingReviews(false);
+        }
+      }
+      setEditingReview(null);
+    } catch (err) {
+      alert(err.message || 'No se pudo guardar la reseña');
+    } finally {
+      setEditingSaving(false);
+    }
+  }
+
+  // Open delete confirmation modal for a review
+  function openDeleteReview(review) {
+    if (!review) return;
+    setDeletingReview(review);
+  }
+
+  // Confirm and perform delete
+  async function confirmDeleteReview() {
+    if (!deletingReview) return;
+    const id = deletingReview.id || deletingReview.id_resena || null;
+    if (!id) return alert('ID de reseña inválido');
+    setDeletingSaving(true);
+    try {
+      await apiService.delete(`/resenas/${id}`);
+      // reload reviews
+      const siteId = getSiteId(selected);
+      if (siteId) {
+        setLoadingReviews(true);
+        try {
+          const resp = await apiService.get(`/resenas/sitio/${siteId}`);
+          const raw = Array.isArray(resp) ? resp : (resp?.data || resp?.resenas || resp?.reseñas || []);
+          // try to enrich avatars like elsewhere
+          try {
+            const users = await apiService.get('/users');
+            const usersMap = Array.isArray(users) ? users.reduce((m,u) => { m[u.id] = u; return m; }, {}) : {};
+            const enriched = (raw || []).map(r => {
+              const uid = r.id_usuario || r.userId || r.usuario_id;
+              const avatar = r.avatar || r.profile_picture || (uid && usersMap[uid] && usersMap[uid].profile_picture) || null;
+              return { ...r, avatar };
+            });
+            setReviews(enriched);
+          } catch (e) {
+            setReviews(raw || []);
+          }
+        } catch (e) {
+          // ignore
+        } finally {
+          setLoadingReviews(false);
+        }
+      }
+      setDeletingReview(null);
+    } catch (err) {
+      alert(err.message || 'No se pudo eliminar la reseña');
+    } finally {
+      setDeletingSaving(false);
+    }
+  }
 
   async function submitReview() {
     const siteId = getSiteId(selected);
@@ -439,7 +685,20 @@ export default function Maps() {
       setLoadingReviews(true);
       try {
         const resp = await apiService.get(`/resenas/sitio/${siteId}`);
-        setReviews(Array.isArray(resp) ? resp : (resp?.data || resp?.resenas || resp?.reseñas || []));
+        // try to enrich avatars after posting
+        const raw = Array.isArray(resp) ? resp : (resp?.data || resp?.resenas || resp?.reseñas || []);
+        try {
+          const users = await apiService.get('/users');
+          const usersMap = Array.isArray(users) ? users.reduce((m,u) => { m[u.id] = u; return m; }, {}) : {};
+          const enriched = (raw || []).map(r => {
+            const uid = r.id_usuario || r.userId || r.usuario_id;
+            const avatar = r.avatar || r.profile_picture || (uid && usersMap[uid] && usersMap[uid].profile_picture) || null;
+            return { ...r, avatar };
+          });
+          setReviews(enriched);
+        } catch (e) {
+          setReviews(raw || []);
+        }
       } catch (e) {
         // ignore
       }
@@ -462,6 +721,13 @@ export default function Maps() {
       try {
         const { latitude, longitude } = pos.coords;
         setCenter([latitude, longitude]);
+        setCurrentPosition({ latitude, longitude });
+        try {
+          if (userMarkerRef.current && mapRef.current) mapRef.current.removeLayer(userMarkerRef.current);
+          if (mapRef.current) {
+            userMarkerRef.current = L.circleMarker([latitude, longitude], { radius: 7, color: '#0b9f88', fillColor:'#0b9f88', fillOpacity:1 }).addTo(mapRef.current);
+          }
+        } catch (e) {}
         if (mapRef.current) {
           try {
             mapRef.current.setView([latitude, longitude], 14);
@@ -512,6 +778,23 @@ export default function Maps() {
       stars.push(<Star key={i} filled={i <= num}>★</Star>);
     }
     return <span>{stars}</span>;
+  }
+
+  function formatDistance(meters) {
+    if (!meters && meters !== 0) return '';
+    if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+    return `${Math.round(meters)} m`;
+  }
+
+  function formatDuration(seconds) {
+    if (!seconds && seconds !== 0) return '';
+    const mins = Math.round(seconds / 60);
+    if (mins >= 60) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
+    return `${mins} min`;
   }
 
   return (
@@ -633,7 +916,41 @@ export default function Maps() {
 
               <MetaRow>
                 <div className="category">{selected.categoria || ''}</div>
-                <div className="rating">{(selected.avg_rating || selected.rating) ? `${Number(selected.avg_rating || selected.rating).toFixed(1)} ★` : ''}</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div className="rating">{(selected.avg_rating || selected.rating) ? `${Number(selected.avg_rating || selected.rating).toFixed(1)} ★` : ''}</div>
+                    <DirectionsButton onClick={() => handleComoLlegar()}>Como llegar</DirectionsButton>
+                    <DirectionsButton onClick={() => {
+                      const dest = [Number(selected.latitud), Number(selected.longitud)];
+                      if (currentPosition && currentPosition.latitude && currentPosition.longitude) {
+                        const originParam = `${currentPosition.latitude},${currentPosition.longitude}`;
+                        const destParam = `${dest[0]},${dest[1]}`;
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originParam)}&destination=${encodeURIComponent(destParam)}&travelmode=driving`;
+                        window.open(url, '_blank');
+                        return;
+                      }
+                      // fallback: try to obtain current position and open maps with origin when available
+                      if ('geolocation' in navigator) {
+                        navigator.geolocation.getCurrentPosition((p) => {
+                          const originParam = `${p.coords.latitude},${p.coords.longitude}`;
+                          const destParam = `${dest[0]},${dest[1]}`;
+                          const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originParam)}&destination=${encodeURIComponent(destParam)}&travelmode=driving`;
+                          window.open(url, '_blank');
+                        }, () => {
+                          // if failed, open with destination only
+                          const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest[0]+','+dest[1])}`;
+                          window.open(url, '_blank');
+                        }, { enableHighAccuracy: true, timeout: 8000 });
+                      } else {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest[0]+','+dest[1])}`;
+                        window.open(url, '_blank');
+                      }
+                    }}>Abrir en Maps</DirectionsButton>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                    {directionsLoading ? 'Trazando ruta...' : (directionsInfo ? `${formatDistance(directionsInfo.distance)} · ${formatDuration(directionsInfo.duration)}` : '')}
+                  </div>
+                </div>
               </MetaRow>
 
               <Tabs>
@@ -656,7 +973,39 @@ export default function Maps() {
 
               {detailTab === 'reviews' && (
                 <div>
+                  {/* Review input: moved above the list so user can type without scrolling */}
                   <div style={{ marginTop: 6 }}>
+                    <h4 style={{ margin: '6px 0' }}>Escribe una reseña</h4>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                      <label style={{ fontWeight:600 }}>Puntuación</label>
+                      <StarPicker aria-label="Selecciona la puntuación">
+                        {[1,2,3,4,5].map(n => (
+                          <StarPickerButton
+                            key={n}
+                            type="button"
+                            aria-label={`${n} estrellas`}
+                            onClick={() => setReviewRating(n)}
+                            selected={n <= reviewRating}
+                          >
+                            ★
+                          </StarPickerButton>
+                        ))}
+                      </StarPicker>
+                      <div style={{ color: '#666', fontSize: 13 }}>{reviewRating} ★</div>
+                    </div>
+
+                    <ReviewForm style={{ maxWidth: 320, width: '100%' }}>
+                      <ReviewTextarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} placeholder="Comparte tu experiencia (máx. 500 caracteres)" maxLength={500} />
+                      <ReviewButtons>
+                        <SecondaryButton type="button" onClick={() => { setReviewText(''); setReviewRating(5); }}>Cancelar</SecondaryButton>
+                        <PrimaryButton type="button" onClick={() => submitReview()} disabled={submittingReview}>{submittingReview ? 'Enviando...' : 'Enviar reseña'}</PrimaryButton>
+                      </ReviewButtons>
+                    </ReviewForm>
+                  </div>
+
+                  <hr style={{ margin: '12px 0' }} />
+
+                  <div>
                     {loadingReviews ? (
                       <div> Cargando reseñas... </div>
                     ) : (
@@ -670,24 +1019,39 @@ export default function Maps() {
                                 const rating = Number(r.rating || r.calificacion || r.calif) || 0;
                                 const text = r.comment || r.texto || r.comentario || '';
                                 const date = formatDate(r.created_at || r.fecha || r.date);
-                                const initials = (author || 'A').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
-                                return (
-                                  <ReviewItem key={id}>
-                                    <Avatar aria-hidden>{initials}</Avatar>
-                                    <ReviewContent>
-                                      <ReviewHeaderRow>
-                                        <AuthorName>{author}</AuthorName>
-                                        <DateText>{date}</DateText>
-                                      </ReviewHeaderRow>
-                                      <StarRow>{renderStars(rating)} <RatingValue>{rating ? `${rating.toFixed(1)} ★` : ''}</RatingValue></StarRow>
-                                      {text && <ReviewText>{text}</ReviewText>}
-                                      <ReviewActions>
-                                        <ActionButton className="danger">Eliminar</ActionButton>
-                                        <ActionButton>Editar</ActionButton>
-                                      </ReviewActions>
-                                    </ReviewContent>
-                                  </ReviewItem>
-                                );
+                                  const initials = (author || 'A').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
+                                  const avatarUrl = r.avatar || r.profile_picture || null;
+                                  // determine if current user is the author
+                                  const currentUser = authService.getCurrentUser();
+                                  const currentUserId = currentUser ? (currentUser.id || currentUser.userId || currentUser._id) : null;
+                                  const reviewUserId = r.id_usuario || r.userId || r.usuario_id || null;
+                                  const isOwner = currentUserId && reviewUserId && String(currentUserId) === String(reviewUserId);
+
+                                  return (
+                                    <ReviewItem key={id} style={{ width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
+                                      <Avatar aria-hidden>
+                                        {avatarUrl ? <img src={avatarUrl} alt={author} style={{ width:44, height:44, borderRadius:22, objectFit:'cover' }} /> : initials}
+                                      </Avatar>
+                                      <ReviewContent>
+                                        <ReviewHeaderRow>
+                                          <AuthorName>{author}</AuthorName>
+                                          <DateText>{date}</DateText>
+                                        </ReviewHeaderRow>
+                                        <StarRow>{renderStars(rating)} <RatingValue>{rating ? `${rating.toFixed(1)} ★` : ''}</RatingValue></StarRow>
+                                        {text && <ReviewText>{text}</ReviewText>}
+                                          <ReviewActions>
+                                            {isOwner ? (
+                                              <>
+                                                <ActionButton className="danger" onClick={() => openDeleteReview({ id, ...r })}>Eliminar</ActionButton>
+                                                <ActionButton onClick={() => openEditReview(r)}>Editar</ActionButton>
+                                              </>
+                                            ) : (
+                                              <div style={{ color:'#888', fontSize:13 }}>No disponible</div>
+                                            )}
+                                          </ReviewActions>
+                                      </ReviewContent>
+                                    </ReviewItem>
+                                  );
                               })}
                             </ReviewList>
                           </div>
@@ -695,32 +1059,50 @@ export default function Maps() {
                       </div>
                     )}
                   </div>
-
-                  <hr style={{ margin: '12px 0' }} />
-                  <div>
-                    <h4 style={{ margin: '6px 0' }}>Escribe una reseña</h4>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-                      <label style={{ fontWeight:600 }}>Puntuación</label>
-                      <select value={reviewRating} onChange={(e) => setReviewRating(Number(e.target.value))}>
-                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} ★</option>)}
-                      </select>
-                    </div>
-                    <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} style={{ width: '100%', minHeight: 80, padding:8, borderRadius:8, border:'1px solid #e6e6e6' }} />
-                    <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginTop:8 }}>
-                      <button className="secondary" onClick={() => { setReviewText(''); setReviewRating(5); }}>Cancelar</button>
-                      <button onClick={() => submitReview()} disabled={submittingReview}>{submittingReview ? 'Enviando...' : 'Enviar reseña'}</button>
-                    </div>
-                  </div>
                 </div>
               )}
             </DetailBody>
           </DetailPanel>
         )}
 
+        {editingReview && (
+          <ModalOverlay onClick={() => setEditingReview(null)}>
+            <ModalCard onClick={(e) => e.stopPropagation()}>
+              <h3>Editar reseña</h3>
+              <div style={{ marginTop: 8 }}>
+                <ReviewTextarea value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={500} />
+                <ReviewButtons style={{ marginTop: 12 }}>
+                  <SecondaryButton onClick={() => setEditingReview(null)}>Cancelar</SecondaryButton>
+                  <PrimaryButton onClick={() => saveEditedReview()} disabled={editingSaving}>{editingSaving ? 'Guardando...' : 'Guardar'}</PrimaryButton>
+                </ReviewButtons>
+              </div>
+            </ModalCard>
+          </ModalOverlay>
+        )}
+
+        {deletingReview && (
+          <ModalOverlay onClick={() => setDeletingReview(null)}>
+            <ModalCard onClick={(e) => e.stopPropagation()}>
+              <h3>Eliminar reseña</h3>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ marginBottom: 12 }}>¿Estás seguro que quieres eliminar esta reseña? Esta acción no se puede deshacer.</div>
+                <ReviewButtons>
+                  <SecondaryButton onClick={() => setDeletingReview(null)}>Cancelar</SecondaryButton>
+                  <PrimaryButton onClick={() => confirmDeleteReview()} disabled={deletingSaving}>{deletingSaving ? 'Eliminando...' : 'Eliminar'}</PrimaryButton>
+                </ReviewButtons>
+              </div>
+            </ModalCard>
+          </ModalOverlay>
+        )}
+
       </MapWrapper>
     </PageContainer>
   );
 }
+
+// note: delete/edit flows handled inside component via modals
+
+
 
 function escapeHtml(unsafe) {
   return String(unsafe)
@@ -1133,6 +1515,16 @@ const MetaRow = styled.div`
   display:flex; justify-content:space-between; align-items:center; font-weight:600; color:#333;
 `;
 
+const DirectionsButton = styled.button`
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #0b9f88;
+  background: #fff;
+  color: #0b9f88;
+  font-weight:700;
+  cursor:pointer;
+`;
+
 const Tabs = styled.div`display:flex; gap:8px; margin-top:4px;`;
 const Tab = styled.div`padding:6px 10px; border-radius:8px; background:${p => p.active ? '#0b9f88' : '#fff'}; color:${p => p.active ? '#fff' : '#333'}; border:1px solid #e6e6e6; font-weight:600;`;
 
@@ -1143,11 +1535,11 @@ const InfoItem = styled.li`font-size:14px; color:#333;`;
 
 /* Reviews styles */
 const ReviewList = styled.div`
-  display:flex; flex-direction:column; gap:12px; margin-top:6px;
+  display:flex; flex-direction:column; gap:12px; margin-top:6px; width:100%; overflow-x:hidden;
 `;
 
 const ReviewItem = styled.div`
-  display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:10px; background:#fff; border:1px solid #f3f3f3;
+  display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:10px; background:#fff; border:1px solid #f3f3f3; width:100%; box-sizing:border-box; overflow:hidden;
 `;
 
 const Avatar = styled.div`
@@ -1167,9 +1559,82 @@ const Star = styled.span`
 `;
 const RatingValue = styled.span`font-size:13px; color:#444; margin-left:6px;`;
 
-const ReviewText = styled.div`font-size:13px; color:#444; line-height:1.4;`;
+const ReviewText = styled.div`font-size:13px; color:#444; line-height:1.4; word-break:break-word;`;
 
 const ReviewActions = styled.div`display:flex; gap:8px; justify-content:flex-end; margin-top:6px;`;
 const ActionButton = styled.button`
   padding:6px 10px; border-radius:8px; border:1px solid #e6e6e6; background: ${p => p.className && p.className.includes('danger') ? '#fff' : '#fff'}; color: ${p => p.className && p.className.includes('danger') ? '#e05555' : '#0b9f88'}; cursor:pointer; font-weight:600;
 `;
+
+const StarPicker = styled.div`
+  display:flex;
+  gap:6px;
+  align-items:center;
+`;
+
+const StarPickerButton = styled.button`
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: ${p => p.selected ? '#ffb74d' : '#e6e6e6'};
+  transition: transform 0.08s ease, color 0.08s ease;
+  &:hover { transform: scale(1.12); }
+  &:focus { outline: 2px solid rgba(11,159,136,0.18); border-radius:6px }
+`;
+
+/* Review form inside detail panel */
+const ReviewForm = styled.div`
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:6px;
+`;
+
+const ReviewTextarea = styled.textarea`
+  width:100%;
+  max-width:320px;
+  min-height:60px;
+  max-height:120px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #e6e6e6;
+  resize:vertical;
+  font-size:14px;
+  line-height:1.3;
+  box-sizing:border-box;
+`;
+
+const ReviewButtons = styled.div`
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:4px;
+`;
+
+const SecondaryButton = styled.button`
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #d6eae3;
+  background: #fff;
+  color: #0b9f88;
+  cursor:pointer;
+  font-weight:600;
+`;
+
+const PrimaryButton = styled.button`
+  padding:8px 12px;
+  border-radius:8px;
+  border:none;
+  background: linear-gradient(90deg,#d9f3ee,#bfeee2);
+  color: #056a52;
+  cursor:pointer;
+  font-weight:700;
+  box-shadow: 0 6px 14px rgba(11,159,136,0.08);
+  &:disabled{ opacity:0.6; cursor:not-allowed }
+`;
+
+/* tooltip style for site names on map */
+const SiteTooltipStyle = styled.div``;
