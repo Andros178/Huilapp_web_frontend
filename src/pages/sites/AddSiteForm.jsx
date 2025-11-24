@@ -96,7 +96,7 @@ export default function AddSiteForm({ onSuccess, onCancel }) {
       form.append('telefono', telefono);
       form.append('pet_friendly', petFriendly ? 'true' : 'false');
       form.append('kids_friendly', kidsFriendly ? 'true' : 'false');
-      if (file) form.append('file', file, file.name);
+      if (file) form.append('imagen', file, file.name);
 
       await apiService.postFormData('/sites', form);
       if (onSuccess) onSuccess();
