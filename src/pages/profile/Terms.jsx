@@ -9,9 +9,6 @@ const Terms = () => {
     <Container>
       <Card>
         <Header>
-          <BackButton onClick={() => navigate("/profile")}>
-            <FiArrowLeft />
-          </BackButton>
           <Title>Términos y Condiciones</Title>
         </Header>
 

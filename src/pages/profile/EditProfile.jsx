@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { FiEdit } from 'react-icons/fi';
+import { FiEdit } from "react-icons/fi";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -22,9 +22,8 @@ const EditProfile = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef();
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
   const [formErrors, setFormErrors] = useState({});
-
 
   useEffect(() => {
     if (user) {
@@ -48,34 +47,58 @@ const EditProfile = () => {
     let isValid = true;
     const newErrors = {};
 
-    if (!form.nombre || !form.nombre.trim()) {
-      newErrors.nombre = 'El nombre es obligatorio';
-      isValid = false;
-    }
+    const nombre = (form.nombre || "").trim();
+    const apellidos = (form.apellidos || "").trim();
+    const telefono = (form.telefono || "").trim();
+    const email = (form.email || "").trim();
 
-    if (!form.apellidos || !form.apellidos.trim()) {
-      newErrors.apellidos = 'El apellido es obligatorio';
-      isValid = false;
-    }
-
-    if (!form.email || !form.email.trim()) {
-      newErrors.email = 'El correo es obligatorio';
+    // Nombre: obligatorio, 3-20 letras, sin números
+    if (!nombre) {
+      newErrors.nombre = "El nombre es obligatorio";
       isValid = false;
     } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.email)) {
-        newErrors.email = 'Formato de correo inválido';
+      const nameRegex = /^\p{L}{3,20}$/u;
+      if (!nameRegex.test(nombre)) {
+        newErrors.nombre =
+          "El nombre debe tener entre 3 y 20 letras (sin números)";
         isValid = false;
       }
     }
 
-    if (!form.telefono || !form.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es obligatorio';
+    // Apellidos: obligatorio, 3-20 letras, sin números
+    if (!apellidos) {
+      newErrors.apellidos = "El apellido es obligatorio";
       isValid = false;
     } else {
-      const phoneRegex = /^[0-9]+$/;
-      if (!phoneRegex.test(form.telefono)) {
-        newErrors.telefono = 'El teléfono solo debe contener números';
+      const surnameRegex = /^\p{L}{3,20}$/u;
+      if (!surnameRegex.test(apellidos)) {
+        newErrors.apellidos =
+          "El apellido debe tener entre 3 y 20 letras (sin números)";
+        isValid = false;
+      }
+    }
+
+    // Email: obligatorio y formato
+    if (!email) {
+      newErrors.email = "El correo es obligatorio";
+      isValid = false;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = "Formato de correo inválido";
+        isValid = false;
+      }
+    }
+
+    // Teléfono: obligatorio y exactamente 10 dígitos numéricos
+    if (!telefono) {
+      newErrors.telefono = "El teléfono es obligatorio";
+      isValid = false;
+    } else {
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(telefono)) {
+        newErrors.telefono =
+          "El teléfono debe tener exactamente 10 dígitos numéricos";
         isValid = false;
       }
     }
@@ -93,8 +116,6 @@ const EditProfile = () => {
     }
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -106,29 +127,32 @@ const EditProfile = () => {
       setSaving(true);
       // Si hay una imagen seleccionada, enviar FormData en una sola petición PUT
       if (selectedFile) {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.15:3000';
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://192.168.1.15:3000";
         const formData = new FormData();
-        formData.append('profile_picture', selectedFile);
-        formData.append('usuario', user.usuario || '');
-        formData.append('email', form.email || user.email || '');
-        formData.append('nombre', form.nombre || user.nombre || '');
-        formData.append('apellidos', form.apellidos || user.apellidos || '');
-        formData.append('telefono', form.telefono || user.telefono || '');
+        formData.append("profile_picture", selectedFile);
+        formData.append("usuario", user.usuario || "");
+        formData.append("email", form.email || user.email || "");
+        formData.append("nombre", form.nombre || user.nombre || "");
+        formData.append("apellidos", form.apellidos || user.apellidos || "");
+        formData.append("telefono", form.telefono || user.telefono || "");
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/users/${user.id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || data.message || 'Error al actualizar usuario');
+          throw new Error(
+            data.error || data.message || "Error al actualizar usuario"
+          );
         }
 
         // Refrescar usuario y limpiar selección
-        if (typeof refreshUser === 'function') await refreshUser();
+        if (typeof refreshUser === "function") await refreshUser();
         setSelectedFile(null);
         setPreviewUrl(null);
       } else {
@@ -143,11 +167,11 @@ const EditProfile = () => {
       }
 
       setSaving(false);
-      setSuccessMessage('Datos actualizados correctamente');
+      setSuccessMessage("Datos actualizados correctamente");
       setSuccessModalOpen(true);
     } catch (err) {
       setSaving(false);
-      setError(err.message || 'Error al actualizar');
+      setError(err.message || "Error al actualizar");
     }
   };
 
@@ -164,55 +188,142 @@ const EditProfile = () => {
               ) : user?.profile_picture ? (
                 <AvatarImg src={user.profile_picture} alt="avatar" />
               ) : (
-                <AvatarInitial>{(user?.nombre || 'U').charAt(0).toUpperCase()}</AvatarInitial>
+                <AvatarInitial>
+                  {(user?.nombre || "U").charAt(0).toUpperCase()}
+                </AvatarInitial>
               )}
-              <EditPhotoButton type="button" onClick={() => fileInputRef.current?.click()} aria-label="Editar foto">
+              <EditPhotoButton
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Editar foto"
+              >
                 <FiEdit size={18} />
               </EditPhotoButton>
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFileSelect}
+              />
             </AvatarBox>
             <PhotoActions>
-              <SmallButton onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}>Cancelar</SmallButton>
+              <SmallButton
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPreviewUrl(null);
+                }}
+              >
+                Cancelar
+              </SmallButton>
               <SmallNote>La foto se sube al guardar los cambios</SmallNote>
             </PhotoActions>
           </Left>
 
           <Right>
             <Form onSubmit={handleSubmit}>
-          <Field>
-            <Label>Nombre</Label>
-            <Input id="nombre" name="nombre" value={form.nombre} onChange={handleChange} data-error={!!formErrors.nombre} aria-invalid={!!formErrors.nombre} aria-describedby={formErrors.nombre ? 'error-nombre' : undefined} />
-            {formErrors.nombre && <FieldError id="error-nombre">{formErrors.nombre}</FieldError>}
-          </Field>
+              <Field>
+                <Label>
+                  Nombre
+                  <Required aria-hidden="true">*</Required>
+                </Label>
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  data-error={!!formErrors.nombre}
+                  aria-invalid={!!formErrors.nombre}
+                  aria-describedby={
+                    formErrors.nombre ? "error-nombre" : undefined
+                  }
+                />
+                {formErrors.nombre && (
+                  <FieldError id="error-nombre">{formErrors.nombre}</FieldError>
+                )}
+              </Field>
 
-          <Field>
-            <Label>Apellidos</Label>
-            <Input id="apellidos" name="apellidos" value={form.apellidos} onChange={handleChange} data-error={!!formErrors.apellidos} aria-invalid={!!formErrors.apellidos} aria-describedby={formErrors.apellidos ? 'error-apellidos' : undefined} />
-            {formErrors.apellidos && <FieldError id="error-apellidos">{formErrors.apellidos}</FieldError>}
-          </Field>
+              <Field>
+                <Label>
+                  Apellidos
+                  <Required aria-hidden="true">*</Required>
+                </Label>
+                <Input
+                  id="apellidos"
+                  name="apellidos"
+                  value={form.apellidos}
+                  onChange={handleChange}
+                  data-error={!!formErrors.apellidos}
+                  aria-invalid={!!formErrors.apellidos}
+                  aria-describedby={
+                    formErrors.apellidos ? "error-apellidos" : undefined
+                  }
+                />
+                {formErrors.apellidos && (
+                  <FieldError id="error-apellidos">
+                    {formErrors.apellidos}
+                  </FieldError>
+                )}
+              </Field>
 
-          <Field>
-            <Label>Teléfono</Label>
-            <Input id="telefono" name="telefono" value={form.telefono} onChange={handleChange} data-error={!!formErrors.telefono} aria-invalid={!!formErrors.telefono} aria-describedby={formErrors.telefono ? 'error-telefono' : undefined} />
-            {formErrors.telefono && <FieldError id="error-telefono">{formErrors.telefono}</FieldError>}
-          </Field>
+              <Field>
+                <Label>
+                  Teléfono
+                  <Required aria-hidden="true">*</Required>
+                </Label>
+                <Input
+                  id="telefono"
+                  name="telefono"
+                  value={form.telefono}
+                  onChange={handleChange}
+                  data-error={!!formErrors.telefono}
+                  aria-invalid={!!formErrors.telefono}
+                  aria-describedby={
+                    formErrors.telefono ? "error-telefono" : undefined
+                  }
+                />
+                {formErrors.telefono && (
+                  <FieldError id="error-telefono">
+                    {formErrors.telefono}
+                  </FieldError>
+                )}
+              </Field>
 
-          <Field>
-            <Label>Correo</Label>
-            <Input id="email" name="email" value={form.email} onChange={handleChange} data-error={!!formErrors.email} aria-invalid={!!formErrors.email} aria-describedby={formErrors.email ? 'error-email' : undefined} />
-            {formErrors.email && <FieldError id="error-email">{formErrors.email}</FieldError>}
-          </Field>
+              <Field>
+                <Label>
+                  Correo
+                  <Required aria-hidden="true">*</Required>
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  data-error={!!formErrors.email}
+                  aria-invalid={!!formErrors.email}
+                  aria-describedby={
+                    formErrors.email ? "error-email" : undefined
+                  }
+                />
+                {formErrors.email && (
+                  <FieldError id="error-email">{formErrors.email}</FieldError>
+                )}
+              </Field>
 
-          {error && <ErrorMsg>{error}</ErrorMsg>}
-          <Buttons>
-            <Button type="button" onClick={() => navigate('/profile')} disabled={saving}>
-              Cancelar
-            </Button>
-            <PrimaryButton type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </PrimaryButton>
-          </Buttons>
-        </Form>
+              {error && <ErrorMsg>{error}</ErrorMsg>}
+              <Buttons>
+                <Button
+                  type="button"
+                  onClick={() => navigate("/profile")}
+                  disabled={saving}
+                >
+                  Cancelar
+                </Button>
+                <PrimaryButton type="submit" disabled={saving}>
+                  {saving ? "Guardando..." : "Guardar cambios"}
+                </PrimaryButton>
+              </Buttons>
+            </Form>
           </Right>
         </Content>
         {successModalOpen && (
@@ -224,7 +335,7 @@ const EditProfile = () => {
                 <ModalButton
                   onClick={() => {
                     setSuccessModalOpen(false);
-                    navigate('/profile');
+                    navigate("/profile");
                   }}
                 >
                   Aceptar
@@ -243,79 +354,87 @@ export default EditProfile;
 /* --------------------- STYLED COMPONENTS --------------------- */
 
 const Container = styled.div`
-  width: 100%;
-  min-height: 100vh;
-  background: #ffffff;
   display: flex;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 48px 20px;
 `;
 
 const Card = styled.div`
   width: 100%;
-  max-width: 760px;
-  background: #fff;
-  padding: 25px;
-  border-radius: 18px;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.06);
+  max-width: 880px;
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(19, 28, 33, 0.06);
 
   @media (max-width: 768px) {
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 12px;
   }
 `;
 
 const HeaderTitle = styled.h2`
   text-align: center;
   font-size: 22px;
-  font-weight: 600;
-  color: #000;
-  margin-bottom: 25px;
+  font-weight: 700;
+  color: #008073;
+  margin-bottom: 22px;
 
   @media (max-width: 480px) {
     font-size: 20px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
 `;
 
 const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 16px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Field = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  width: 100%;
 `;
 
 const Label = styled.label`
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
+  margin-top: 8px;
 `;
 
 const Input = styled.input`
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e6e6e6;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e7eef0;
+  background: #fbfeff;
   font-size: 14px;
   outline: none;
-  transition: box-shadow 120ms ease, border-color 120ms ease;
+  transition: box-shadow 140ms ease, border-color 140ms ease,
+    transform 120ms ease;
 
   &:focus {
-    box-shadow: 0 0 0 4px rgba(13,148,136,0.12);
+    box-shadow: 0 6px 18px rgba(13, 148, 136, 0.08),
+      0 0 0 4px rgba(13, 148, 136, 0.06);
     border-color: #0d9488;
+    transform: translateY(-1px);
   }
 
-  /* when input has data-error attribute, show red border and red focus ring */
   &[data-error="true"] {
-    border-color: #b91c1c;
+    border-color: #f87171;
+    background: #fff6f6;
   }
 
   &:focus[data-error="true"] {
-    box-shadow: 0 0 0 4px rgba(185,28,28,0.08);
-    border-color: #b91c1c;
+    box-shadow: 0 6px 18px rgba(248, 113, 113, 0.06),
+      0 0 0 4px rgba(248, 113, 113, 0.06);
+    border-color: #f87171;
   }
 `;
 // TypeScript: declare transient prop type for styled-components compatibility
@@ -326,6 +445,7 @@ const Buttons = styled.div`
   justify-content: flex-end;
   gap: 10px;
   margin-top: 6px;
+  grid-column: 1 / -1;
 
   @media (max-width: 520px) {
     flex-direction: column-reverse;
@@ -338,8 +458,9 @@ const Button = styled.button`
   padding: 10px 14px;
   border-radius: 10px;
   background: transparent;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
   cursor: pointer;
+  color: #22303a;
 
   @media (max-width: 520px) {
     width: 100%;
@@ -347,9 +468,10 @@ const Button = styled.button`
 `;
 
 const PrimaryButton = styled(Button)`
-  background: #0d9488;
+  background: linear-gradient(180deg, #16a085, #0d9488);
   color: #fff;
   border: none;
+  box-shadow: 0 8px 18px rgba(13, 148, 136, 0.12);
 
   @media (max-width: 520px) {
     width: 100%;
@@ -368,14 +490,15 @@ const FieldError = styled.div`
 `;
 
 const Content = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: 240px 1fr;
   gap: 28px;
-  align-items: flex-start;
+  align-items: start;
 
-  @media (max-width: 820px) {
-    flex-direction: column;
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
     gap: 18px;
-    align-items: center;
+    justify-items: center;
   }
 `;
 
@@ -386,9 +509,8 @@ const Left = styled.div`
   align-items: center;
   gap: 16px;
 
-  @media (max-width: 820px) {
+  @media (max-width: 980px) {
     width: auto;
-    align-items: center;
     margin: 0 auto;
   }
 `;
@@ -399,17 +521,18 @@ const Right = styled.div`
 `;
 
 const AvatarBox = styled.div`
-  width: 250px;
-  height: 250px;
+  width: 180px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  border-radius: 50%;
 
   @media (max-width: 480px) {
-    width: 140px;
-    height: 140px;
+    width: 120px;
+    height: 120px;
   }
 `;
 
@@ -418,37 +541,38 @@ const AvatarImg = styled.img`
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 3px solid #32cfc0ff;
+  border: 4px solid rgba(45, 197, 182, 0.95);
 `;
 
 const AvatarInitial = styled.div`
-  font-size: 64px;
+  font-size: 44px;
   font-weight: 700;
-  color: #444;
+  color: #2b3440;
   @media (max-width: 480px) {
-    font-size: 28px;
+    font-size: 26px;
   }
 `;
 
 const EditPhotoButton = styled.button`
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: -5px;
+  right: -5px;
   width: 44px;
   height: 44px;
   padding: 0;
-  background: #0d9488;
+  background: #10b981;
   color: #fff;
   border: none;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 14px rgba(13,148,136,0.18);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.14);
+  z-index: 30;
   cursor: pointer;
 
   &:hover {
-    background: #0b7b6f;
+    background: #0ea57b;
     transform: translateY(-1px);
   }
 
@@ -462,8 +586,8 @@ const EditPhotoButtonMobile = styled(EditPhotoButton)`
   @media (max-width: 480px) {
     width: 36px;
     height: 36px;
-    bottom: 8px;
-    right: 8px;
+    bottom: -8px;
+    right: -8px;
   }
 `;
 
@@ -502,7 +626,7 @@ const SmallNote = styled.div`
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -515,7 +639,7 @@ const ModalBox = styled.div`
   border-radius: 12px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 `;
 
 const ModalTitle = styled.h3`
@@ -539,4 +663,11 @@ const ModalButton = styled.button`
   border: none;
   border-radius: 8px;
   cursor: pointer;
+`;
+
+const Required = styled.span`
+  color: #ef4444;
+  margin-left: 6px;
+  font-weight: 700;
+  line-height: 1;
 `;

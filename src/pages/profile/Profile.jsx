@@ -40,6 +40,7 @@ const Profile = () => {
       label: "Términos y condiciones",
       screen: "/terms",
     },
+    
   ];
 
   return (
@@ -49,24 +50,33 @@ const Profile = () => {
 
         {/* USER INFO */}
         <ProfileHeader>
-          <Avatar>
-            {authUser?.profile_picture ? (
-              <ProfileImg src={authUser.profile_picture} alt="avatar" />
-            ) : (
-              (authUser
-                ? (authUser.nombre || authUser.name || "").charAt(0).toUpperCase()
-                : "U")
-            )}
-          </Avatar>
+          <AvatarWrapper onClick={() => navigate("/editProfile")}> 
+            <Avatar>
+              {authUser?.profile_picture ? (
+                <ProfileImg src={authUser.profile_picture} alt="avatar" />
+              ) : (
+                (authUser
+                  ? (authUser.nombre || authUser.name || "").charAt(0).toUpperCase()
+                  : "U")
+              )}
+            </Avatar>
+            <EditOverlay title="Editar perfil">
+              <AiOutlineEdit size={16} color="#fff" />
+            </EditOverlay>
+          </AvatarWrapper>
+
           <UserInfo>
             <UserName>
               {((authUser?.nombre || authUser?.name) || "Usuario")}
               {authUser?.apellidos ? ` ${authUser.apellidos}` : ""}
             </UserName>
-            <UserEmail>
-              <AiOutlineMail size={14} style={{ marginRight: 8 }} />
-              {authUser?.email || ""}
-            </UserEmail>
+            <UserMeta>
+              <UserEmail>
+                <AiOutlineMail size={14} style={{ marginRight: 8 }} />
+                {authUser?.email || ""}
+              </UserEmail>
+              {authUser?.phone && <UserPhone>{authUser.phone}</UserPhone>}
+            </UserMeta>
           </UserInfo>
         </ProfileHeader>
 
@@ -81,9 +91,10 @@ const Profile = () => {
             }
           >
             <Left>
-              {item.icon}
+              <IconBubble>{item.icon}</IconBubble>
               <Label>{item.label}</Label>
             </Left>
+            <Chevron />
           </OptionRow>
         ))}
       </Card>
@@ -115,9 +126,9 @@ const Card = styled.div`
 
 const HeaderTitle = styled.h2`
   text-align: center;
-  font-size: 22px;
+  font-size: 25px;
   font-weight: 600;
-  color: #000;
+  color: #008073;
   margin-bottom: 25px;
 `;
 
@@ -151,30 +162,62 @@ const ProfileHeader = styled.div`
   padding: 8px 4px 18px 4px;
   border-bottom: 1px solid #eee;
   margin-bottom: 10px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 12px 4px 18px 4px;
+  }
+`;
+
+const AvatarWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 `;
 
 const Avatar = styled.div`
-  width: 64px;
-  height: 64px;
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: linear-gradient(180deg, #f7f8fb, #eef2f7);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   color: #333;
-  font-size: 22px;
+  font-size: 28px;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+  overflow: hidden;
+
+  @media (max-width: 600px) {
+    width: 88px;
+    height: 88px;
+    font-size: 26px;
+  }
 `;
 
 const UserInfo = styled.div`
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 600px) {
+    align-items: center;
+  }
 `;
 
 const UserName = styled.div`
   font-size: 18px;
   font-weight: 600;
   color: #111;
+
+  @media (max-width: 600px) {
+    font-size: 17px;
+  }
 `;
 
 const UserEmail = styled.div`
@@ -183,6 +226,10 @@ const UserEmail = styled.div`
   font-size: 14px;
   color: #666;
   margin-top: 4px;
+
+  @media (max-width: 600px) {
+    justify-content: center;
+  }
 `;
 
 const ProfileImg = styled.img`
@@ -190,4 +237,58 @@ const ProfileImg = styled.img`
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  display: block;
+`;
+
+const EditOverlay = styled.div`
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  background: #008073;
+  width: 36px;
+  height: 36px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(43, 138, 239, 0.18);
+
+  @media (max-width: 600px) {
+    right: -6px;
+    bottom: -6px;
+    width: 34px;
+    height: 34px;
+  }
+`;
+
+const UserMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+`;
+
+const UserPhone = styled.div`
+  font-size: 13px;
+  color: #777;
+`;
+
+const IconBubble = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f6f8fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #008073;
+`;
+
+const Chevron = styled.div`
+  width: 10px;
+  height: 10px;
+  transform: rotate(-45deg);
+  border-right: 2px solid #cfcfcf;
+  border-bottom: 2px solid #cfcfcf;
+  margin-top: 8px;
 `;
