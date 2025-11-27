@@ -78,7 +78,6 @@ const LoginContainer = styled.div`
 
 const FormSection = styled.div`
   flex: 0 0 40%;
-  background-color: #f5f5dc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -148,7 +147,7 @@ const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
   font-size: 14px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid ${props => props.$hasError ? '#dc2626' : '#e0e0e0'};
   border-radius: 6px;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -156,8 +155,8 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #0d9488;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    border-color: ${props => props.$hasError ? '#dc2626' : '#0d9488'};
+    box-shadow: 0 0 0 3px ${props => props.$hasError ? 'rgba(220, 38, 38, 0.1)' : 'rgba(13, 148, 136, 0.1)'};
   }
 
   &::placeholder {
@@ -345,7 +344,7 @@ export default function Login() {
         } catch (error) {
             // Mostrar error del backend
             setErrors({ 
-                submit: error.message || 'Error al iniciar sesión. Verifica tus credenciales.' 
+                submit: 'Email o contraseña incorrecta.' 
             });
         } finally {
             setIsLoading(false);
@@ -393,10 +392,11 @@ export default function Login() {
                                 type="email"
                                 placeholder="Ingrese el correo electrónico"
                                 value={email}
+                                $hasError={errors.email || errors.submit}
                                 onChange={(e) => {
                                     setEmail(e.target.value);
-                                    if (errors.email) {
-                                        setErrors({ ...errors, email: '' });
+                                    if (errors.email || errors.submit) {
+                                        setErrors({ ...errors, email: '', submit: '' });
                                     }
                                 }}
                             />
@@ -412,10 +412,11 @@ export default function Login() {
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Contraseña"
                                     value={password}
+                                    $hasError={errors.password || errors.submit}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
-                                        if (errors.password) {
-                                            setErrors({ ...errors, password: '' });
+                                        if (errors.password || errors.submit) {
+                                            setErrors({ ...errors, password: '', submit: '' });
                                         }
                                     }}
                                 />
