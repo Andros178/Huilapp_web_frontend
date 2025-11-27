@@ -68,6 +68,7 @@ const RegisterContainer = styled.div`
   align-items: flex-start;
   padding: 40px 24px;
   background-color: #ffffff;
+  overflow-y: auto;
 
   @media (max-width: 768px) {
     padding: 30px 16px;
@@ -75,17 +76,13 @@ const RegisterContainer = styled.div`
 `;
 
 const FormSection = styled.div`
-  background-color: #f5f5dc;
-  padding: 40px;
+  padding: 60px 80px;
   border-radius: 8px;
   width: 100%;
-  max-width: 600px;
-  overflow-y: auto;
-  max-height: calc(100vh - 160px);
+  max-width: 1000px;
 
   @media (max-width: 768px) {
     padding: 30px 20px;
-    max-height: none;
   }
 `;
 
@@ -94,7 +91,7 @@ const Form = styled.form`
 `;
 
 const FormTitle = styled.h2`
-  font-size: 32px;
+  font-size: 40px;
   font-weight: bold;
   color: #0d9488;
   margin: 0 0 12px 0;
@@ -105,8 +102,9 @@ const FormTitle = styled.h2`
   }
 `;
 
-const FormSubtitle = styled.p`
+const FormSubtitle = styled.h3`
   font-size: 16px;
+  font-weight: bold;
   color: #4b5563;
   margin: 0 0 30px 0;
   line-height: 1.6;
@@ -119,8 +117,8 @@ const FormSubtitle = styled.p`
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 40px;
+  margin-bottom: 30px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -257,6 +255,7 @@ const LegalText = styled.p`
   color: #4b5563;
   margin: 20px 0;
   line-height: 1.6;
+  text-align: center;
 `;
 
 const LegalLink = styled.a`
@@ -271,20 +270,24 @@ const LegalLink = styled.a`
 `;
 
 const SubmitButton = styled.button`
-  width: 100%;
-  padding: 14px 28px;
-  font-size: 16px;
+  width: 40%;
+  padding: 16px 28px;
+  font-size: 18px;
   font-weight: 600;
   color: #ffffff;
-  background-color: #0d9488;
+  background: linear-gradient(135deg, #0d9488 0%, #0d7a72 100%);
   border: none;
-  border-radius: 6px;
+  border-radius: 40px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 20px;
+  transition: all 0.3s ease;
+  margin: 20px auto 0;
+  display: block;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 
   &:hover:not(:disabled) {
-    background-color: #0d7a72;
+    background: linear-gradient(135deg, #0d7a72 0%, #0a6860 100%);
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
+    transform: translateY(-2px);
   }
 
   &:disabled {
@@ -293,8 +296,9 @@ const SubmitButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 12px 24px;
-    font-size: 15px;
+    padding: 14px 24px;
+    font-size: 16px;
+    width: 60%;
   }
 `;
 
