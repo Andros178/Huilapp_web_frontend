@@ -808,7 +808,7 @@ export default function Welcome() {
                         Explora rutas, hospedajes, restaurantes y mucho más desde nuestra
                         plataforma interactiva.
                     </HeroSubtitle>
-                    <PrimaryButton onClick={() => navigate("/login")}>
+                    <PrimaryButton onClick={() => { window.scrollTo(0, 0); navigate("/login")}}>
                         Explorar destinos
                     </PrimaryButton>
                 </HeroContent>

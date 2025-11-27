@@ -429,10 +429,18 @@ export default function VerifyCode() {
 
         try {
             // Verificar código con el backend
-            await apiService.post('/users/reset-password', {
+            const response = await apiService.post('/users/verify-reset-code', {
                 email,
-                codigo: enteredCode
+                code: enteredCode
             })
+
+            // Guardar el resetToken en localStorage
+            if (response && response.resetToken) {
+              console.log("Reset Token:", response.resetToken)
+              localStorage.setItem("resetToken", response.resetToken)
+            } else {
+              console.error("No reset token received from server")
+            }
 
             // Si llega aquí, el código es válido
             setShowSuccessModal(true)
@@ -467,7 +475,6 @@ export default function VerifyCode() {
             const newVerificationCode = Math.floor(Math.random() * 10000)
                 .toString()
                 .padStart(4, "0")
-            console.log("Código de verificación (reenviado):", newVerificationCode)
             localStorage.setItem("verificationCode", newVerificationCode)
             
             // Incrementar contador y activar timer de 5 minutos (300 segundos)

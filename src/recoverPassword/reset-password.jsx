@@ -379,18 +379,29 @@ export default function ResetPassword() {
 
         setIsLoading(true)
 
-        const email = localStorage.getItem("recoveryEmail")
+        const resetToken = localStorage.getItem("resetToken")
+
+        if (!resetToken) {
+            setErrorMessage("No se encontró el token de recuperación. Por favor inicia el proceso nuevamente.")
+            setShowErrorModal(true)
+            setIsLoading(false)
+            return
+        }
 
         try {
             // Actualizar contraseña en el backend
-            await apiService.post('/users/change-password', {
-                email,
-                nuevaContrasena: formData.password
+            await apiService.post('/users/reset-password', {
+                resetToken,
+                nuevaContrasena: formData.password,
+                nuevaContrasena2: formData.confirmPassword
             })
 
             // Clear localStorage
             localStorage.removeItem("recoveryEmail")
             localStorage.removeItem("verificationCode")
+            localStorage.removeItem("resetToken")
+            localStorage.removeItem("resendCodeEndTime")
+            localStorage.removeItem("resendCodeCount")
             
             setShowSuccessModal(true)
         } catch (error) {
