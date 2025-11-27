@@ -358,7 +358,7 @@ const ServiceCardTitle = styled.h4`
 
 const CTASection = styled.section`
   background-color: #1a1a1a;
-  background-image: url("src/assets/images/desierto_cactus.png?height=400&width=1200");
+  background-image: url("src/assets/images/desierto_tatacoa.png?height=400&width=1200");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -892,8 +892,8 @@ export default function Welcome() {
                         Explora sus paisajes, saborea su cultura y descubre experiencias
                         únicas con nuestra app de turismo interactiva.
                     </CTAText>
-                    <PrimaryButton onClick={() => navigate("/register")}>
-                        comienza tu aventura
+                    <PrimaryButton onClick={() => { window.scrollTo(0, 0); navigate("/register"); }}>
+                        COMIENZAR MI AVENTURA
                     </PrimaryButton>
                 </CTAContent>
             </CTASection>
