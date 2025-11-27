@@ -1,11 +1,24 @@
 "use client";
 
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
     Play,
 } from "lucide-react";
+import { FaMapPin as MapPin } from "react-icons/fa";
+import { MdStar as Star } from "react-icons/md";
 import styled from "styled-components";
 import Footer from "../components/Footer";
+
+import imgTatacoa from '../assets/images/sitios/Tatacoa.png';
+import imgAgustin from '../assets/images/sitios/Agustin.jpg';
+import imgNevado from '../assets/images/sitios/Nevado.jpg';
+import imgBetania from '../assets/images/sitios/Betania.jpg';
+import imgGuacharo from '../assets/images/sitios/Guacharo.jpg';
+import imgPitalito from '../assets/images/sitios/Pitalito.jpg';
+import imgBambuco from '../assets/images/eventos/Bambuco.JPG';
+import imgJagua from '../assets/images/eventos/Jagua.jpeg';
+import imgJunero from '../assets/images/eventos/Junero.jpg';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -498,6 +511,279 @@ const VideoDescription = styled.p`
   }
 `;
 
+// Destinos Styles
+const DestinosSection = styled.section`
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 40px 16px;
+  }
+`;
+
+const DestinosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+const DestinoCard = styled.div`
+  position: relative;
+  cursor: pointer;
+  border-radius: 16px;
+  overflow: hidden;
+  @media (max-width: 768px) {
+    border-radius: 12px;
+  }
+`;
+
+const DestinoImg = styled.img`
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  transition: .3s;
+  ${DestinoCard}:hover & {
+    transform: scale(1.1);
+  }
+  @media (max-width: 768px) {
+    height: 200px;
+  }
+`;
+
+const DestinoOverlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: #fff;
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+`;
+
+const DestinoName = styled.h3`
+  margin: 0;
+  font-size: 20px;
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+`;
+
+const DestinoLugar = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+`;
+
+const SmallButton = styled.button`
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  @media (max-width: 768px) {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+`;
+
+// Eventos Styles
+const EventosSection = styled.section`
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 40px 16px;
+  }
+`;
+
+const EventosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 35px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+const EventoCard = styled.div`
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  transition: .3s;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  @media (max-width: 768px) {
+    border-radius: 12px;
+  }
+`;
+
+const EventoImg = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  @media (max-width: 768px) {
+    height: 180px;
+  }
+`;
+
+const EventoInfo = styled.div`
+  padding: 20px;
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const EventoTitle = styled.h3`
+  font-size: 20px;
+  margin-bottom: 10px;
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+`;
+
+const EventoFecha = styled.p`
+  font-size: 14px;
+  margin-bottom: 15px;
+  opacity: 0.7;
+  @media (max-width: 768px) {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+`;
+
+// Modal Styles
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const ModalContent = styled.div`
+  background: #fff;
+  width: 85%;
+  max-width: 900px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+  }
+`;
+
+const ModalImage = styled.img`
+  width: 40%;
+  object-fit: cover;
+  height: 100%;
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 200px;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  @media (max-width: 768px) {
+    padding: 16px;
+    overflow-y: auto;
+  }
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 22px;
+  color: #0d9488;
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+`;
+
+const ModalDate = styled.p`
+  margin: 0;
+  color: #666;
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+`;
+
+const ModalDescription = styled.p`
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+`;
+
+const ModalCloseButton = styled.button`
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-self: flex-end;
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 12px;
+    align-self: stretch;
+  }
+`;
+
+// =============================== DATOS ===============================
+const destinos = [
+  { id: 1, nombre: "Desierto de la Tatacoa", lugar: "Villavieja", img: imgTatacoa },
+  { id: 2, nombre: "Parque Arqueológico", lugar: "San Agustín", img: imgAgustin },
+  { id: 3, nombre: "Nevado del Huila", lugar: "Zona volcánica", img: imgNevado }, 
+  { id: 4, nombre: "Betania", lugar: "Huila", img: imgBetania },
+  { id: 5, nombre: "Cueva del Guácharo", lugar: "Paicol", img: imgGuacharo },
+  { id: 6, nombre: "Pitalito", lugar: "Huila", img: imgPitalito },
+];
+
+const eventos = [
+  { id: 1, nombre: "Festival del Bambuco", fecha: "Junio", img: imgBambuco, descripcion: "El Festival del Bambuco es una de las celebraciones culturales más representativas del departamento del Huila. Durante varios días, las calles se llenan de música típica, comparsas, reinados folclóricos y muestras artísticas que resaltan la identidad huilense." },
+  { id: 2, nombre: "Festival de las Brujas", fecha: "Agosto", img: imgJagua, descripcion: "El Festival de las Brujas, celebrado en el municipio de La Jagua, es una fiesta cargada de magia, mitología y tradición oral. Durante este evento se realizan desfiles temáticos, concursos de disfraces y presentaciones musicales." },
+  { id: 3, nombre: "Festival de San Juanero", fecha: "Julio", img: imgJunero, descripcion: "El Festival de San Juanero rinde homenaje a uno de los ritmos más emblemáticos del Huila: el Sanjuanero Huilense. En esta festividad se realizan concursos de interpretación y baile, desfiles folclóricos y encuentros culturales." },
+  { id: 4, nombre: "Festival del Bambuco", fecha: "Junio", img: imgBambuco, descripcion: "Esta versión del Festival del Bambuco continúa resaltando la riqueza cultural del Huila con un enfoque en la participación comunitaria. Los asistentes disfrutan de tarimas musicales y ferias gastronómicas." },
+  { id: 5, nombre: "Festival de las Brujas", fecha: "Agosto", img: imgJagua, descripcion: "En esta celebración mística, el Festival de las Brujas destaca las leyendas tradicionales y el folclor huilense. Los visitantes pueden recorrer mercados artesanales y presenciar rituales simbólicos." },
+  { id: 6, nombre: "Festival de San Juanero", fecha: "Julio", img: imgJunero, descripcion: "Otra edición del Festival de San Juanero celebra con intensidad la música y danza tradicional del Huila. Este evento reúne a bailarines, músicos y familias enteras." },
+];
+
 // Main Component
 export default function Welcome() {
     const navigate = useNavigate();
@@ -565,83 +851,38 @@ export default function Welcome() {
                 </PromotionContainer>
             </AppPromotionSection>
 
-            {/* Services Section */}
-            <ServicesSection>
-                <SectionTitle>SERVICIOS</SectionTitle>
-                <ServicesGrid>
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="src\assets\images\servicios\hoteles_y_hospedajes.png"
-                            alt="Hoteles"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>
-                                Hoteles y hospedajes pet friendly
-                            </ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
+            {/* Destinos populares */}
+            <DestinosSection>
+                <SectionTitle>Destinos populares</SectionTitle>
+                <DestinosGrid>
+                    {destinos.map((item, index) => (
+                        <DestinoCard key={index}>
+                            <DestinoImg src={item.img} />
+                            <DestinoOverlay>
+                                <DestinoName>{item.nombre}</DestinoName>
+                                <DestinoLugar><MapPin /> {item.lugar}</DestinoLugar>
+                            </DestinoOverlay>
+                        </DestinoCard>
+                    ))}
+                </DestinosGrid>
+            </DestinosSection>
 
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="src\assets\images\servicios\restaurante.png?height=100&width=100"
-                            alt="Restaurantes"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>
-                                Restaurantes y gastronomía local
-                            </ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
-
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="src\assets\images\servicios\mapa.png?height=100&width=100"
-                            alt="Mapa GPS"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>Mapa interactivo con GPS</ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
-
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="src\assets\images\servicios\chat.png?height=100&width=100"
-                            alt="Chatbot"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>
-                                Chatbot con información de sitios
-                            </ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
-
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="src\assets\images\servicios\rutas.png?height=100&width=100"
-                            alt="Rutas"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>Rutas turísticas y destinos</ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
-
-                    <ServiceCard>
-                        <ServiceCardImage
-                            src="/src\assets\images\servicios\resena.png?height=100&width=100"
-                            alt="Reseñas"
-                            loading="lazy"
-                        />
-                        <ServiceCardContent>
-                            <ServiceCardTitle>Reseñas y calificaciones</ServiceCardTitle>
-                        </ServiceCardContent>
-                    </ServiceCard>
-                </ServicesGrid>
-            </ServicesSection>
+            {/* Eventos */}
+            <EventosSection>
+                <SectionTitle>Eventos</SectionTitle>
+                <EventosGrid>
+                    {eventos.map((item, index) => (
+                        <EventoCard key={index}>
+                            <EventoImg src={item.img} />
+                            <EventoInfo>
+                                <EventoTitle>{item.nombre}</EventoTitle>
+                                <EventoFecha>{item.fecha}</EventoFecha>
+                                <SmallButton onClick={() => { window.scrollTo(0, 0); navigate("/login"); }}>Ver más <Star /></SmallButton>
+                            </EventoInfo>
+                        </EventoCard>
+                    ))}
+                </EventosGrid>
+            </EventosSection>
 
             {/* CTA Section */}
             <CTASection>
