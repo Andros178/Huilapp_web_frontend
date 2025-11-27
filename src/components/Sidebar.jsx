@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import iconNavbar from "../assets/images/navbar.PNG";
+import iconNavbar from "../assets/images/huilapp_imagotipo.png";
 import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser, FiPlus, FiLogOut } from "react-icons/fi";
 
 const parseJwt = (token) => {
@@ -75,7 +75,8 @@ export default function Sidebar() {
 
       <SidebarContainer id="app-sidebar" isOpen={isOpen}>
         <SidebarHeader>
-          <Logo src={iconNavbar} alt="Huilapp Logo" />
+          <Logo src={
+            iconNavbar} alt="Huilapp Logo" />
         </SidebarHeader>
 
         <Nav>
@@ -199,7 +200,7 @@ const SidebarHeader = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 140px;
+  width: 200px;
   height: auto;
   object-fit: contain;
 `;

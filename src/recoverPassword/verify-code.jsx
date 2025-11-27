@@ -45,6 +45,7 @@ const NavButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 20px;
@@ -73,7 +74,7 @@ const VerifyContainer = styled.div`
 
 const FormSection = styled.div`
   flex: 0 0 40%;
-  background-color: #f5f5dc;
+  background-color: #ffffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,12 +167,34 @@ const ResendLink = styled.div`
   span {
     color: #0d9488;
     text-decoration: none;
-    cursor: pointer;
+    cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
     font-weight: 600;
+    opacity: ${props => props.$disabled ? '0.5' : '1'};
 
     &:hover {
-      opacity: 0.8;
+      opacity: ${props => props.$disabled ? '0.5' : '0.8'};
     }
+  }
+`
+
+const TimerContainer = styled.div`
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f0fdfa;
+  border-radius: 8px;
+  border: 1px solid #0d9488;
+`
+
+const TimerText = styled.p`
+  font-size: 14px;
+  color: #0d9488;
+  font-weight: 600;
+  margin: 0;
+  
+  span {
+    font-size: 18px;
+    font-weight: bold;
   }
 `
 
@@ -204,7 +227,7 @@ const SubmitButton = styled.button`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/images/woman-going-work-bicycle.jpg') center / contain no-repeat;
+  background: url('/src/assets/images/mitad.png') center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {
@@ -302,13 +325,68 @@ export default function VerifyCode() {
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showErrorModal, setShowErrorModal] = useState(false)
     const [showResendModal, setShowResendModal] = useState(false)
+    const [resendCount, setResendCount] = useState(0)
+    const [timeRemaining, setTimeRemaining] = useState(0)
+    const [canResend, setCanResend] = useState(true)
     const inputRefs = useRef([])
 
+    // Cargar el estado del timer al montar el componente
     useEffect(() => {
+        const savedEndTime = localStorage.getItem("resendCodeEndTime")
+        const savedResendCount = localStorage.getItem("resendCodeCount")
+        
+        if (savedEndTime) {
+            const endTime = parseInt(savedEndTime, 10)
+            const currentTime = Date.now()
+            const remainingTime = Math.floor((endTime - currentTime) / 1000)
+            
+            if (remainingTime > 0) {
+                setTimeRemaining(remainingTime)
+                setCanResend(false)
+            } else {
+                // El tiempo ya expiró, limpiar localStorage
+                localStorage.removeItem("resendCodeEndTime")
+                setCanResend(true)
+            }
+        }
+        
+        if (savedResendCount) {
+            setResendCount(parseInt(savedResendCount, 10))
+        }
+        
         if (inputRefs.current[0]) {
             inputRefs.current[0].focus()
         }
     }, [])
+
+    // Timer effect
+    useEffect(() => {
+        let interval = null
+        
+        if (timeRemaining > 0) {
+            interval = setInterval(() => {
+                setTimeRemaining((prevTime) => {
+                    if (prevTime <= 1) {
+                        setCanResend(true)
+                        // Limpiar localStorage cuando el timer expira
+                        localStorage.removeItem("resendCodeEndTime")
+                        return 0
+                    }
+                    return prevTime - 1
+                })
+            }, 1000)
+        }
+
+        return () => {
+            if (interval) clearInterval(interval)
+        }
+    }, [timeRemaining])
+
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${minutes}:${secs.toString().padStart(2, '0')}`
+    }
 
     const handleCodeChange = (index, value) => {
         // Only allow numeric input
@@ -352,10 +430,18 @@ export default function VerifyCode() {
 
         try {
             // Verificar código con el backend
-            await apiService.post('/users/reset-password', {
+            const response = await apiService.post('/users/verify-reset-code', {
                 email,
-                codigo: enteredCode
+                code: enteredCode
             })
+
+            // Guardar el resetToken en localStorage
+            if (response && response.resetToken) {
+              console.log("Reset Token:", response.resetToken)
+              localStorage.setItem("resetToken", response.resetToken)
+            } else {
+              console.error("No reset token received from server")
+            }
 
             // Si llega aquí, el código es válido
             setShowSuccessModal(true)
@@ -379,6 +465,8 @@ export default function VerifyCode() {
     }
 
     const handleResendCode = async () => {
+        if (!canResend) return
+
         const email = localStorage.getItem("recoveryEmail")
         
         try {
@@ -388,8 +476,19 @@ export default function VerifyCode() {
             const newVerificationCode = Math.floor(Math.random() * 10000)
                 .toString()
                 .padStart(4, "0")
-            console.log("Código de verificación (reenviado):", newVerificationCode)
             localStorage.setItem("verificationCode", newVerificationCode)
+            
+            // Incrementar contador y activar timer de 5 minutos (300 segundos)
+            const newResendCount = resendCount + 1
+            setResendCount(newResendCount)
+            localStorage.setItem("resendCodeCount", newResendCount.toString())
+            
+            if (newResendCount >= 1) {
+                const endTime = Date.now() + (300 * 1000) // 5 minutos en milisegundos
+                localStorage.setItem("resendCodeEndTime", endTime.toString())
+                setTimeRemaining(300) // 5 minutos
+                setCanResend(false)
+            }
             
             // Mostrar modal de código reenviado
             setShowResendModal(true)
@@ -439,9 +538,18 @@ export default function VerifyCode() {
                         </CodeInputContainer>
 
                         {/* Resend Link */}
-                        <ResendLink>
+                        <ResendLink $disabled={!canResend}>
                             ¿No recibiste el código? <span onClick={handleResendCode}>Reenviar código</span>
                         </ResendLink>
+
+                        {/* Timer Display */}
+                        {timeRemaining > 0 && (
+                            <TimerContainer>
+                                <TimerText>
+                                    Podrás solicitar un nuevo código en <span>{formatTime(timeRemaining)}</span>
+                                </TimerText>
+                            </TimerContainer>
+                        )}
 
                         {/* Submit Button */}
                         <SubmitButton type="submit" disabled={isLoading || code.some((digit) => !digit)}>

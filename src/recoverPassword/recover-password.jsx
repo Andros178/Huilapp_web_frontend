@@ -45,6 +45,7 @@ const NavButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 20px;
@@ -73,7 +74,7 @@ const RecoverContainer = styled.div`
 
 const FormSection = styled.div`
   flex: 0 0 40%;
-  background-color: #f5f5dc;
+  background-color: #ffffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +214,7 @@ const LoginPrompt = styled.div`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/images/woman-going-work-bicycle.jpg') center / contain no-repeat;
+  background: url('/src/assets/images/mitad.png') center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {

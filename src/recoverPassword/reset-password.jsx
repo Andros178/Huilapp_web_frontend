@@ -45,6 +45,7 @@ const NavButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 20px;
@@ -73,7 +74,7 @@ const ResetContainer = styled.div`
 
 const FormSection = styled.div`
   flex: 0 0 40%;
-  background-color: #f5f5dc;
+  background-color: #ffffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -225,7 +226,7 @@ const SubmitButton = styled.button`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/images/woman-going-work-bicycle.jpg') center / contain no-repeat;
+  background: url('/src/assets/images/mitad.png') center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {
@@ -379,18 +380,29 @@ export default function ResetPassword() {
 
         setIsLoading(true)
 
-        const email = localStorage.getItem("recoveryEmail")
+        const resetToken = localStorage.getItem("resetToken")
+
+        if (!resetToken) {
+            setErrorMessage("No se encontró el token de recuperación. Por favor inicia el proceso nuevamente.")
+            setShowErrorModal(true)
+            setIsLoading(false)
+            return
+        }
 
         try {
             // Actualizar contraseña en el backend
-            await apiService.post('/users/change-password', {
-                email,
-                nuevaContrasena: formData.password
+            await apiService.post('/users/reset-password', {
+                resetToken,
+                nuevaContrasena: formData.password,
+                nuevaContrasena2: formData.confirmPassword
             })
 
             // Clear localStorage
             localStorage.removeItem("recoveryEmail")
             localStorage.removeItem("verificationCode")
+            localStorage.removeItem("resetToken")
+            localStorage.removeItem("resendCodeEndTime")
+            localStorage.removeItem("resendCodeCount")
             
             setShowSuccessModal(true)
         } catch (error) {
