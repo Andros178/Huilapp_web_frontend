@@ -1,5 +1,5 @@
 // Servicio genérico para hacer peticiones HTTP al backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.15:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://158.69.60.80/api/';
 
 class ApiService {
   /**

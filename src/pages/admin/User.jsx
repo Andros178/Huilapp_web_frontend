@@ -1,10 +1,10 @@
-// src/pages/admin/Users.jsx
+// src/pages/admin/Users.jsx 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import apiService from "../../services/api.service";
 
 const PRIMARY = "#008073";
-const API_BASE = "https://huilapp-backend.onrender.com";
 
 // ======================
 // Helpers
@@ -139,48 +139,69 @@ const UsersGridWrapper = styled.div`
 
 const UsersGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const UserCard = styled.div`
   display: grid;
-  grid-template-columns: 60px 1fr 80px;
-  gap: 12px;
-  background: #ffffff;
-  padding: 14px;
-  border-radius: 18px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  grid-template-columns: 50px 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "avatar info"
+    "buttons buttons";
+  gap: 10px;
+
+  background: ${({ $isAdmin }) => ($isAdmin ? "#FFF4E5" : "#ffffff")};
+  border: ${({ $isAdmin }) =>
+    $isAdmin ? "1px solid #FCD9B6" : "1px solid #E5E7EB"};
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 `;
 
 const Avatar = styled.div`
-  width: 60px;
-  height: 60px;
+  grid-area: avatar;
+  width: 50px;
+  height: 50px;
   border-radius: 999px;
   background-size: cover;
   background-position: center;
   background-image: ${({ src }) =>
-    src
-      ? `url(${src})`
-      : "linear-gradient(135deg,#22c55e,#0ea5e9)"};
+    src ? `url(${src})` : "linear-gradient(135deg,#22c55e,#0ea5e9)"};
 `;
 
 const UserInfo = styled.div`
+  grid-area: info;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
 `;
 
-const UserName = styled.h3`
-  font-size: 15px;
+const AdminTag = styled.span`
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: #f97316;
+  color: #fff;
+  border-radius: 999px;
+  align-self: flex-start;
+  margin-bottom: 2px;
+`;
+
+const UserName = styled.div`
+  font-size: 14px;
   font-weight: 600;
   color: #111827;
-  margin: 0;
 `;
 
 const UserMeta = styled.div`
@@ -188,42 +209,34 @@ const UserMeta = styled.div`
   color: #6b7280;
 `;
 
-const RoleBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  background: ${({ $isAdmin }) =>
-    $isAdmin ? "#fef3c7" : "#e5f3ff"};
-  color: ${({ $isAdmin }) => ($isAdmin ? "#92400e" : "#1d4ed8")};
-  margin-top: 3px;
-`;
-
 const UserActions = styled.div`
+  grid-area: buttons;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   gap: 6px;
-  align-items: flex-end;
+  margin-top: 6px;
 `;
 
 const ActionButton = styled.button`
+  flex: 1;
   border: none;
-  border-radius: 999px;
-  padding: 6px 10px;
+  border-radius: 12px;
+  padding: 6px 0;
   font-size: 11px;
   cursor: pointer;
+  font-weight: 500;
+
+  background: ${({ variant }) =>
+    variant === "edit" ? "#E5F3FF" : "#FEE2E2"};
+  color: ${({ variant }) =>
+    variant === "edit" ? "#0369A1" : "#B91C1C"};
+
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  background: ${({ variant }) =>
-    variant === "edit" ? "#e0f2fe" : "#fee2e2"};
-  color: ${({ variant }) =>
-    variant === "edit" ? "#0369a1" : "#b91c1c"};
 
   &:hover {
-    filter: brightness(0.96);
+    filter: brightness(0.95);
   }
 `;
 
@@ -233,8 +246,6 @@ const MessageBox = styled.div`
   font-size: 14px;
   color: #6b7280;
 `;
-
-/* ===== MODAL EDICIÓN ===== */
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -249,23 +260,84 @@ const ModalOverlay = styled.div`
 const ModalContent = styled.div`
   background: #ffffff;
   border-radius: 18px;
-  padding: 20px 22px;
+  padding: 36px 40px;
   width: 100%;
-  max-width: 420px;
+  max-width: 820px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+`;
+
+const ModalLayout = styled.div`
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 22px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ModalProfile = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+`;
+
+const ModalAvatar = styled.div`
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background-size: cover;
+  background-position: center;
+  background-image: ${({ src }) =>
+    src ? `url(${src})` : "linear-gradient(135deg,#22c55e,#0ea5e9)"};
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.15);
+`;
+
+const ModalProfileName = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+`;
+
+const ModalProfileMeta = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+`;
+
+const ModalRoleChip = styled.span`
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: ${({ $isAdmin }) =>
+    $isAdmin ? "#FEF3C7" : "#E5F3FF"};
+  color: ${({ $isAdmin }) =>
+    $isAdmin ? "#92400E" : "#1D4ED8"};
 `;
 
 const ModalTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 12px 0;
+  margin: 0;
 `;
 
 const ModalForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
 const ModalLabel = styled.label`
@@ -275,6 +347,8 @@ const ModalLabel = styled.label`
 
 const ModalInput = styled.input`
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   padding: 8px 10px;
@@ -284,6 +358,12 @@ const ModalInput = styled.input`
   &:focus {
     border-color: ${PRIMARY};
     box-shadow: 0 0 0 1px ${PRIMARY}20;
+  }
+
+  &:read-only {
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
   }
 `;
 
@@ -303,14 +383,8 @@ const ModalButton = styled.button`
   font-weight: 500;
   ${({ variant }) =>
     variant === "primary"
-      ? `
-    background: ${PRIMARY};
-    color: #ffffff;
-  `
-      : `
-    background: #f3f4f6;
-    color: #374151;
-  `}
+      ? `background: ${PRIMARY}; color: #ffffff;`
+      : `background: #f3f4f6; color: #374151;`}
 `;
 
 // ======================
@@ -321,7 +395,9 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
+
   const [activeTab, setActiveTab] = useState("Usuarios");
+  const [pendingCount, setPendingCount] = useState(0);
 
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -333,7 +409,8 @@ const Users = () => {
   });
   const [saving, setSaving] = useState(false);
 
-  const TABS = ["Todos los sitios", "Usuarios"];
+  // 👇 añadimos Dashboard al inicio
+  const TABS = ["Dashboard", "Todos los sitios", "Pendientes", "Usuarios"];
 
   async function loadUsers() {
     try {
@@ -356,14 +433,12 @@ const Users = () => {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await apiService.get("/users");
+      const list = Array.isArray(data)
+        ? data
+        : data.users || data.data || [];
 
-      if (!res.ok) throw new Error("Error cargando usuarios");
-
-      const data = await res.json();
-      setUsers(Array.isArray(data) ? data : []);
+      setUsers(list);
     } catch (err) {
       console.error(err);
       setError("No se pudieron cargar los usuarios.");
@@ -371,14 +446,66 @@ const Users = () => {
     }
   }
 
+  async function loadPendingCount() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setPendingCount(0);
+        return;
+      }
+
+      const payload = parseJwt(token);
+      const isAdmin =
+        payload && payload.rol && payload.rol.toLowerCase() === "administrador";
+
+      if (!isAdmin) {
+        setPendingCount(0);
+        return;
+      }
+
+      const res = await apiService.get("/sites/pendientes");
+      const data = res.data || res;
+
+      let list = [];
+      if (Array.isArray(data)) list = data;
+      else if (Array.isArray(data.data)) list = data.data;
+      else if (Array.isArray(data.sites)) list = data.sites;
+
+      const onlyPending = list.filter((s) => s.state === "Pendiente");
+      setPendingCount(onlyPending.length);
+    } catch (err) {
+      console.error("Error cargando pendientes:", err);
+      setPendingCount(0);
+    }
+  }
+
   useEffect(() => {
+    // 👇 nueva ruta de Dashboard
+    if (activeTab === "Dashboard") {
+      navigate("/admin/panelview");
+      return;
+    }
+
     if (activeTab === "Todos los sitios") {
       navigate("/admin/sites");
       return;
     }
+
+    if (activeTab === "Pendientes") {
+      navigate("/admin/Sitesval");
+      return;
+    }
+
+    // Usuarios
     loadUsers();
+    loadPendingCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  useEffect(() => {
+    loadPendingCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredUsers = users.filter((u) => {
     const term = search.toLowerCase();
@@ -390,9 +517,6 @@ const Users = () => {
     );
   });
 
-  // ======================
-  // Editar usuario
-  // ======================
   const openEditModal = (user) => {
     setEditingUser(user);
     setEditForm({
@@ -418,27 +542,37 @@ const Users = () => {
     e.preventDefault();
     if (!editingUser) return;
 
+    const { nombre, apellidos, usuario, email, telefono } = editForm;
+
+    if (
+      !nombre.trim() ||
+      !apellidos.trim() ||
+      !usuario.trim() ||
+      !email.trim() ||
+      !telefono.trim()
+    ) {
+      alert("Todos los campos son obligatorios.");
+      return;
+    }
+
+    const tel = telefono.trim();
+
+    if (!/^[0-9]{10}$/.test(tel)) {
+      alert("El teléfono debe tener exactamente 10 dígitos numéricos.");
+      return;
+    }
+
     try {
       setSaving(true);
-      const token = localStorage.getItem("token");
-      if (!token) return;
 
-      const res = await fetch(`${API_BASE}/users/${editingUser.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editForm),
+      await apiService.put(`/users/${editingUser.id}`, {
+        ...editForm,
+        telefono: tel,
+        email: editingUser.email,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Error al actualizar usuario");
-      }
-
       const updatedUsers = users.map((u) =>
-        u.id === editingUser.id ? { ...u, ...editForm } : u
+        u.id === editingUser.id ? { ...u, ...editForm, telefono: tel } : u
       );
       setUsers(updatedUsers);
       closeEditModal();
@@ -449,9 +583,6 @@ const Users = () => {
     }
   };
 
-  // ======================
-  // Eliminar usuario
-  // ======================
   const handleDeleteUser = async (user) => {
     const ok = window.confirm(
       `¿Seguro que deseas eliminar al usuario "${user.usuario}"? Esta acción no se puede deshacer.`
@@ -459,19 +590,7 @@ const Users = () => {
     if (!ok) return;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch(`${API_BASE}/users/${user.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Error al eliminar usuario");
-      }
-
+      await apiService.delete(`/users/${user.id}`);
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
     } catch (err) {
       console.error("Error eliminando usuario:", err);
@@ -490,7 +609,11 @@ const Users = () => {
                 active={activeTab === t}
                 onClick={() => setActiveTab(t)}
               >
-                {t}
+                {t === "Pendientes"
+                  ? pendingCount > 0
+                    ? `Pendientes (${pendingCount})`
+                    : "Pendientes"
+                  : t}
               </Tab>
             ))}
           </TabsRow>
@@ -501,7 +624,7 @@ const Users = () => {
           <SearchWrapper>
             <SearchInner>
               <SearchInput
-                placeholder="Buscar por nombre, usuario o email"
+                placeholder="Buscar por nombre o email"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -514,119 +637,140 @@ const Users = () => {
 
         <UsersGridWrapper>
           <UsersGrid>
-            {filteredUsers.map((u) => {
-              const isAdmin =
-                u.rol && u.rol.toLowerCase() === "administrador";
+            {filteredUsers
+              .slice()
+              .sort((a, b) => {
+                const aIsAdmin =
+                  a.rol && a.rol.toLowerCase() === "administrador";
+                const bIsAdmin =
+                  b.rol && b.rol.toLowerCase() === "administrador";
 
-              return (
-                <UserCard key={u.id}>
-                  <Avatar src={u.profile_picture} />
-                  <UserInfo>
-                    <UserName>
-                      {u.nombre} {u.apellidos}
-                    </UserName>
-                    <UserMeta>@{u.usuario}</UserMeta>
-                    <UserMeta>{u.email}</UserMeta>
-                    <UserMeta>📞 {u.telefono}</UserMeta>
-                    {u.rol && (
-                      <RoleBadge $isAdmin={isAdmin}>
-                        {isAdmin ? "Administrador" : u.rol}
-                      </RoleBadge>
-                    )}
-                  </UserInfo>
-                  <UserActions>
-                    <ActionButton
-                      variant="edit"
-                      type="button"
-                      onClick={() => openEditModal(u)}
-                    >
-                      ✎ Editar
-                    </ActionButton>
-                    <ActionButton
-                      variant="delete"
-                      type="button"
-                      onClick={() => handleDeleteUser(u)}
-                    >
-                      🗑 Eliminar
-                    </ActionButton>
-                  </UserActions>
-                </UserCard>
-              );
-            })}
+                if (aIsAdmin && !bIsAdmin) return -1;
+                if (!aIsAdmin && bIsAdmin) return 1;
+
+                return (a.usuario || "").localeCompare(b.usuario || "");
+              })
+              .map((u) => {
+                const isAdmin =
+                  u.rol && u.rol.toLowerCase() === "administrador";
+
+                return (
+                  <UserCard key={u.id} $isAdmin={isAdmin}>
+                    <Avatar src={u.profile_picture} />
+                    <UserInfo>
+                      {isAdmin && <AdminTag>Admin</AdminTag>}
+                      <UserName>{u.usuario}</UserName>
+                      <UserMeta>{u.email}</UserMeta>
+                    </UserInfo>
+
+                    <UserActions>
+                      <ActionButton
+                        variant="edit"
+                        type="button"
+                        onClick={() => openEditModal(u)}
+                      >
+                        ✎ Editar
+                      </ActionButton>
+                      <ActionButton
+                        variant="delete"
+                        type="button"
+                        onClick={() => handleDeleteUser(u)}
+                      >
+                        🗑 Eliminar
+                      </ActionButton>
+                    </UserActions>
+                  </UserCard>
+                );
+              })}
           </UsersGrid>
         </UsersGridWrapper>
       </Shell>
 
       {editingUser && (
-        <ModalOverlay onClick={closeEditModal}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>
-              Editar usuario: {editingUser.usuario}
-            </ModalTitle>
-            <ModalForm onSubmit={handleSaveEdit}>
-              <div>
-                <ModalLabel>Nombre</ModalLabel>
-                <ModalInput
-                  name="nombre"
-                  value={editForm.nombre}
-                  onChange={handleEditChange}
-                  required
-                />
-              </div>
-              <div>
-                <ModalLabel>Apellidos</ModalLabel>
-                <ModalInput
-                  name="apellidos"
-                  value={editForm.apellidos}
-                  onChange={handleEditChange}
-                  required
-                />
-              </div>
-              <div>
-                <ModalLabel>Usuario</ModalLabel>
-                <ModalInput
-                  name="usuario"
-                  value={editForm.usuario}
-                  onChange={handleEditChange}
-                  required
-                />
-              </div>
-              <div>
-                <ModalLabel>Email</ModalLabel>
-                <ModalInput
-                  type="email"
-                  name="email"
-                  value={editForm.email}
-                  onChange={handleEditChange}
-                  required
-                />
-              </div>
-              <div>
-                <ModalLabel>Teléfono</ModalLabel>
-                <ModalInput
-                  name="telefono"
-                  value={editForm.telefono}
-                  onChange={handleEditChange}
-                />
-              </div>
+        <ModalOverlay>
+          <ModalContent>
+            <ModalTitle>Editar usuario</ModalTitle>
 
-              <ModalActions>
-                <ModalButton
-                  type="button"
-                  onClick={closeEditModal}
-                  disabled={saving}
-                >
-                  Cancelar
-                </ModalButton>
-                <ModalButton
-                  variant="primary"
-                  type="submit"
-                  disabled={saving}
-                >
-                  {saving ? "Guardando..." : "Guardar"}
-                </ModalButton>
-              </ModalActions>
-            </ModalForm>
+            <ModalLayout>
+              <ModalProfile>
+                <ModalAvatar src={editingUser.profile_picture} />
+                <ModalProfileName>
+                  {editingUser.nombre} {editingUser.apellidos}
+                </ModalProfileName>
+                <ModalProfileMeta>{editingUser.email}</ModalProfileMeta>
+
+                {editingUser.rol && (
+                  <ModalRoleChip
+                    $isAdmin={
+                      editingUser.rol.toLowerCase() === "administrador"
+                    }
+                  >
+                    {editingUser.rol}
+                  </ModalRoleChip>
+                )}
+              </ModalProfile>
+
+              <ModalForm onSubmit={handleSaveEdit}>
+                <div>
+                  <ModalLabel>Nombre</ModalLabel>
+                  <ModalInput
+                    name="nombre"
+                    value={editForm.nombre}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <ModalLabel>Apellidos</ModalLabel>
+                  <ModalInput
+                    name="apellidos"
+                    value={editForm.apellidos}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <ModalLabel>Email (no editable)</ModalLabel>
+                  <ModalInput
+                    type="email"
+                    name="email"
+                    value={editForm.email}
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <ModalLabel>Teléfono</ModalLabel>
+                  <ModalInput
+                    type="tel"
+                    name="telefono"
+                    value={editForm.telefono}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+
+                <ModalActions>
+                  <ModalButton
+                    type="button"
+                    onClick={closeEditModal}
+                    disabled={saving}
+                  >
+                    Cancelar
+                  </ModalButton>
+
+                  <ModalButton
+                    variant="primary"
+                    type="submit"
+                    disabled={saving}
+                  >
+                    {saving ? "Guardando..." : "Guardar"}
+                  </ModalButton>
+                </ModalActions>
+              </ModalForm>
+            </ModalLayout>
           </ModalContent>
         </ModalOverlay>
       )}

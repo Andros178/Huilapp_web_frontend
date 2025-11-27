@@ -64,7 +64,7 @@ export default function Sidebar() {
     return null;
   }
 
-  const sitesPath = isAdmin ? "/admin/sites" : "/locations";
+  const sitesPath = isAdmin ? "/admin/panelview" : "/locations";
   const sitesLabel = isAdmin ? "Sitios (admin)" : "Mis sitios";
 
   return (
@@ -135,7 +135,7 @@ export default function Sidebar() {
                 <ModalConfirm
                   onClick={async () => {
                     try {
-                      await fetch("https://huilapp-backend.onrender.com/users/logout", {
+                      await fetch("http://158.69.60.80/api/users/logout", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                       });
