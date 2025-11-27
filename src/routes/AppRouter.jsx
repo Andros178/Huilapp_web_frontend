@@ -194,7 +194,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          {/* 👇 NUEVA RUTA: pendientes */}
+          {/* pendientes */}
           <Route
             path="/admin/Sitesval"
             element={

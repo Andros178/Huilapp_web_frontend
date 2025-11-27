@@ -76,7 +76,7 @@ const Page = styled.div`
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  background: #f3f4f6;
+  background: #ffffffff;
   font-family: "Inter", sans-serif;
 `;
 

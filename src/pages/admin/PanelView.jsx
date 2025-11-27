@@ -52,7 +52,7 @@ const Page = styled.div`
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  background: #f3f4f6;
+  background: #ffffffff;
   font-family: "Inter", sans-serif;
 `;
 
@@ -452,7 +452,6 @@ const PanelView = () => {
             </MetricHeader>
             <MetricValue>{pendingSites}</MetricValue>
             <MetricHint>
-              <MetricIcon>⏳</MetricIcon>
               Ver lista de sitios por revisar
             </MetricHint>
           </MetricCard>
@@ -464,7 +463,6 @@ const PanelView = () => {
             </MetricHeader>
             <MetricValue>{totalSites}</MetricValue>
             <MetricHint>
-              <MetricIcon>📍</MetricIcon>
               Ir a la gestión completa de sitios
             </MetricHint>
           </MetricCard>
@@ -476,7 +474,6 @@ const PanelView = () => {
             </MetricHeader>
             <MetricValue>{totalUsers}</MetricValue>
             <MetricHint>
-              <MetricIcon>👥</MetricIcon>
               Administrar usuarios de la plataforma
             </MetricHint>
           </MetricCard>

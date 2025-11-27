@@ -65,7 +65,7 @@ export default function Sidebar() {
   }
 
   const sitesPath = isAdmin ? "/admin/panelview" : "/locations";
-  const sitesLabel = isAdmin ? "Sitios (admin)" : "Mis sitios";
+  const sitesLabel = isAdmin ? "Dashboard" : "Mis sitios";
 
   return (
     <>

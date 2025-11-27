@@ -1,5 +1,5 @@
-// src/pages/admin/Users.jsx 
-import React, { useState, useEffect } from "react";
+// src/pages/admin/Users.jsx
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/api.service";
@@ -34,7 +34,7 @@ const Page = styled.div`
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  background: #f3f4f6;
+  background: #ffffffff;
   font-family: "Inter", sans-serif;
 `;
 
@@ -247,6 +247,18 @@ const MessageBox = styled.div`
   color: #6b7280;
 `;
 
+// 🔹 Mensaje de éxito global (como en EditSite)
+const InfoBox = styled.div`
+  background: #ecfdf5;
+  color: #166534;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  margin: 12px 8px 0 8px;
+  font-size: 13px;
+`;
+
+// =================== Modales ===================
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -290,6 +302,12 @@ const ModalProfile = styled.div`
   height: 100%;
 `;
 
+const AvatarWrapper = styled.div`
+  position: relative;
+  width: 140px;
+  height: 140px;
+`;
+
 const ModalAvatar = styled.div`
   width: 140px;
   height: 140px;
@@ -299,6 +317,32 @@ const ModalAvatar = styled.div`
   background-image: ${({ src }) =>
     src ? `url(${src})` : "linear-gradient(135deg,#22c55e,#0ea5e9)"};
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.15);
+`;
+
+const AvatarEditButton = styled.button`
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #008073;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
 `;
 
 const ModalProfileName = styled.div`
@@ -329,6 +373,17 @@ const ModalTitle = styled.h3`
   font-weight: 600;
   color: #111827;
   margin: 0;
+`;
+
+// 🔹 Mensaje de éxito DENTRO DEL MODAL
+const ModalSuccess = styled.div`
+  margin-top: 8px;
+  font-size: 12px;
+  color: #166534;
+  background: #ecfdf5;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  padding: 6px 10px;
 `;
 
 const ModalForm = styled.form`
@@ -387,6 +442,69 @@ const ModalButton = styled.button`
       : `background: #f3f4f6; color: #374151;`}
 `;
 
+const ModalError = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b91c1c;
+`;
+
+// 🔹 Modal de confirmación de borrado
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+`;
+
+const ConfirmBox = styled.div`
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+`;
+
+const ConfirmTitle = styled.h3`
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+`;
+
+const ConfirmText = styled.p`
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: #4b5563;
+`;
+
+const ConfirmActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+`;
+
+const ConfirmButton = styled.button`
+  border-radius: 999px;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+
+  ${({ $variant }) =>
+    $variant === "danger"
+      ? `
+    background:#dc2626;
+    color:#fff;
+  `
+      : `
+    background:#f3f4f6;
+    color:#374151;
+  `}
+`;
+
 // ======================
 // Componente principal
 // ======================
@@ -409,7 +527,21 @@ const Users = () => {
   });
   const [saving, setSaving] = useState(false);
 
-  // 👇 añadimos Dashboard al inicio
+  // foto en modal
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // mensajes en modal
+  const [modalError, setModalError] = useState(null);
+  const [modalSuccess, setModalSuccess] = useState(null);
+
+  // mensaje global arriba
+  const [info, setInfo] = useState(null);
+
+  // modal de confirmación de borrado
+  const [userToDelete, setUserToDelete] = useState(null);
+
   const TABS = ["Dashboard", "Todos los sitios", "Pendientes", "Usuarios"];
 
   async function loadUsers() {
@@ -480,7 +612,6 @@ const Users = () => {
   }
 
   useEffect(() => {
-    // 👇 nueva ruta de Dashboard
     if (activeTab === "Dashboard") {
       navigate("/admin/panelview");
       return;
@@ -526,76 +657,144 @@ const Users = () => {
       email: user.email || "",
       telefono: user.telefono || "",
     });
+    setPhotoFile(null);
+    setPhotoPreview(user.profile_picture || null);
+    setModalError(null);
+    setModalSuccess(null);
   };
 
   const closeEditModal = () => {
     setEditingUser(null);
     setSaving(false);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setModalError(null);
+    setModalSuccess(null);
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
+    if (modalError) setModalError(null);
+    if (modalSuccess) setModalSuccess(null);
   };
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
 
+    setModalError(null);
+    setModalSuccess(null);
+    setInfo(null); // limpiar mensaje global previo
+
     const { nombre, apellidos, usuario, email, telefono } = editForm;
 
+    // Validar nombre: 3-20 letras
+    const nombreTrim = (nombre || "").trim();
+    const nombreRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]{3,20}$/;
+
+    if (!nombreRegex.test(nombreTrim)) {
+      setModalError(
+        "El nombre debe tener entre 3 y 20 caracteres y solo puede contener letras (sin números)."
+      );
+      return;
+    }
+
     if (
-      !nombre.trim() ||
+      !nombreTrim ||
       !apellidos.trim() ||
       !usuario.trim() ||
       !email.trim() ||
       !telefono.trim()
     ) {
-      alert("Todos los campos son obligatorios.");
+      setModalError("Todos los campos son obligatorios.");
       return;
     }
 
     const tel = telefono.trim();
 
     if (!/^[0-9]{10}$/.test(tel)) {
-      alert("El teléfono debe tener exactamente 10 dígitos numéricos.");
+      setModalError("El teléfono debe tener exactamente 10 dígitos numéricos.");
       return;
     }
 
     try {
       setSaving(true);
 
-      await apiService.put(`/users/${editingUser.id}`, {
-        ...editForm,
-        telefono: tel,
-        email: editingUser.email,
-      });
+      const formDataToSend = new FormData();
+      formDataToSend.append("usuario", usuario);
+      formDataToSend.append("nombre", nombreTrim);
+      formDataToSend.append("apellidos", apellidos);
+      formDataToSend.append("email", email);
+      formDataToSend.append("telefono", tel);
 
+      if (photoFile) {
+        formDataToSend.append("profile_picture", photoFile);
+      }
+
+      await apiService.putFormData(`/users/${editingUser.id}`, formDataToSend);
+
+      // actualizar lista local
       const updatedUsers = users.map((u) =>
-        u.id === editingUser.id ? { ...u, ...editForm, telefono: tel } : u
+        u.id === editingUser.id
+          ? {
+              ...u,
+              usuario,
+              nombre: nombreTrim,
+              apellidos,
+              telefono: tel,
+              profile_picture: photoFile ? photoPreview : u.profile_picture,
+            }
+          : u
       );
       setUsers(updatedUsers);
-      closeEditModal();
+
+      // actualizar usuario que está en el modal
+      setEditingUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              usuario,
+              nombre: nombreTrim,
+              apellidos,
+              telefono: tel,
+              profile_picture: photoFile ? photoPreview : prev.profile_picture,
+            }
+          : prev
+      );
+
+      // Mensajes de éxito
+      setInfo("Usuario actualizado correctamente"); // arriba, como EditSite
+      setModalSuccess("Usuario actualizado correctamente"); // dentro del modal
+
+      setSaving(false);
+      // 🔹 NO cerramos el modal (lo dejas abierto para que se vea el mensaje)
     } catch (err) {
       console.error("Error actualizando usuario:", err);
-      alert(err.message || "No se pudo actualizar el usuario");
+      setModalError(err.message || "No se pudo actualizar el usuario");
       setSaving(false);
     }
   };
 
-  const handleDeleteUser = async (user) => {
-    const ok = window.confirm(
-      `¿Seguro que deseas eliminar al usuario "${user.usuario}"? Esta acción no se puede deshacer.`
-    );
-    if (!ok) return;
+  const askDeleteUser = (user) => {
+    setUserToDelete(user);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
 
     try {
-      await apiService.delete(`/users/${user.id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      await apiService.delete(`/users/${userToDelete.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      setUserToDelete(null);
     } catch (err) {
       console.error("Error eliminando usuario:", err);
       alert(err.message || "No se pudo eliminar el usuario");
     }
+  };
+
+  const cancelDeleteUser = () => {
+    setUserToDelete(null);
   };
 
   return (
@@ -632,6 +831,9 @@ const Users = () => {
             </SearchInner>
           </SearchWrapper>
         </Toolbar>
+
+        {/* Mensaje global arriba */}
+        {info && <InfoBox>{info}</InfoBox>}
 
         {error && <MessageBox>{error}</MessageBox>}
 
@@ -674,7 +876,7 @@ const Users = () => {
                       <ActionButton
                         variant="delete"
                         type="button"
-                        onClick={() => handleDeleteUser(u)}
+                        onClick={() => askDeleteUser(u)}
                       >
                         🗑 Eliminar
                       </ActionButton>
@@ -691,9 +893,39 @@ const Users = () => {
           <ModalContent>
             <ModalTitle>Editar usuario</ModalTitle>
 
+            {/* Mensaje de éxito dentro del modal */}
+            {modalSuccess && <ModalSuccess>{modalSuccess}</ModalSuccess>}
+
             <ModalLayout>
               <ModalProfile>
-                <ModalAvatar src={editingUser.profile_picture} />
+                <AvatarWrapper>
+                  <ModalAvatar
+                    src={photoPreview || editingUser.profile_picture}
+                  />
+                  <AvatarEditButton
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Cambiar foto"
+                  >
+                    ✎
+                  </AvatarEditButton>
+                  <HiddenFileInput
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      if (file) {
+                        setPhotoFile(file);
+                        const url = URL.createObjectURL(file);
+                        setPhotoPreview(url);
+                        setModalError(null);
+                        setModalSuccess(null);
+                      }
+                    }}
+                  />
+                </AvatarWrapper>
+
                 <ModalProfileName>
                   {editingUser.nombre} {editingUser.apellidos}
                 </ModalProfileName>
@@ -718,6 +950,7 @@ const Users = () => {
                     value={editForm.nombre}
                     onChange={handleEditChange}
                     required
+                    maxLength={20}
                   />
                 </div>
 
@@ -752,13 +985,15 @@ const Users = () => {
                   />
                 </div>
 
+                {modalError && <ModalError>{modalError}</ModalError>}
+
                 <ModalActions>
                   <ModalButton
                     type="button"
                     onClick={closeEditModal}
                     disabled={saving}
                   >
-                    Cancelar
+                    Cerrar
                   </ModalButton>
 
                   <ModalButton
@@ -773,6 +1008,26 @@ const Users = () => {
             </ModalLayout>
           </ModalContent>
         </ModalOverlay>
+      )}
+
+      {userToDelete && (
+        <ConfirmOverlay>
+          <ConfirmBox>
+            <ConfirmTitle>Eliminar usuario</ConfirmTitle>
+            <ConfirmText>
+              ¿Estás seguro de que deseas eliminar al usuario "
+              {userToDelete.usuario}"? Esta acción no se puede deshacer.
+            </ConfirmText>
+            <ConfirmActions>
+              <ConfirmButton onClick={cancelDeleteUser}>
+                Cancelar
+              </ConfirmButton>
+              <ConfirmButton $variant="danger" onClick={confirmDeleteUser}>
+                Eliminar
+              </ConfirmButton>
+            </ConfirmActions>
+          </ConfirmBox>
+        </ConfirmOverlay>
       )}
     </Page>
   );
