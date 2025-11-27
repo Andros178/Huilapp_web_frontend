@@ -46,6 +46,7 @@ const NavButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 4px;
