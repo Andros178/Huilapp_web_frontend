@@ -142,7 +142,7 @@ const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
   font-size: 14px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid ${props => props.$hasError ? '#dc2626' : '#e0e0e0'};
   border-radius: 6px;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -150,8 +150,8 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #0d9488;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    border-color: ${props => props.$hasError ? '#dc2626' : '#0d9488'};
+    box-shadow: 0 0 0 3px ${props => props.$hasError ? 'rgba(220, 38, 38, 0.1)' : 'rgba(13, 148, 136, 0.1)'};
   }
 
   &::placeholder {
@@ -438,40 +438,47 @@ export default function Register() {
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
 
   const validateNombre = (value) => {
-    if (!value.trim()) return 'El nombre es requerido';
-    if (value.length > 60) return 'El nombre no puede exceder 60 caracteres';
+    if (!value.trim()) return 'El nombre es obligatorio';
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,20}$/.test(value)) {
+      return 'Debe tener entre 3 y 20 letras, sin números';
+    }
     return '';
   };
 
   const validateApellidos = (value) => {
-    if (!value.trim()) return 'Los apellidos son requeridos';
-    if (value.length > 60) return 'Los apellidos no pueden exceder 60 caracteres';
+    if (!value.trim()) return 'El apellido es obligatorio';
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,20}$/.test(value)) {
+      return 'Debe tener entre 3 y 20 letras, sin números';
+    }
     return '';
   };
 
   const validateEmail = (value) => {
-    if (!value.trim()) return 'El email es requerido';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) return 'Por favor ingresa un correo electrónico válido';
+    if (!value.trim()) return 'El correo es obligatorio';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return 'Correo inválido';
+    }
     return '';
   };
 
   const validateTelefono = (value) => {
-    if (!value.trim()) return 'El teléfono es requerido';
-    const phoneRegex = /^\d+$/;
-    if (!phoneRegex.test(value)) return 'El teléfono debe contener solo números';
-    if (value.length !== 10) return 'El teléfono debe tener exactamente 10 dígitos';
+    if (!value.trim()) return 'El teléfono es obligatorio';
+    if (!/^\d{10}$/.test(value)) {
+      return 'El teléfono debe tener exactamente 10 dígitos numéricos';
+    }
     return '';
   };
 
   const validatePassword = (value) => {
-    if (!value.trim()) return 'La contraseña es requerida';
-    if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    if (!value) return 'La contraseña es obligatoria';
+    if (!/^(?=.*[0-9])(?=.*[!@#$%^&*]).{8,20}$/.test(value)) {
+      return 'Debe tener 8-20 caracteres, un número y al menos un carácter especial permitido (! @ # $ % ^ & *)';
+    }
     return '';
   };
 
   const validateConfirmPassword = (value, password) => {
-    if (!value.trim()) return 'Confirmar contraseña es requerido';
+    if (!value) return 'Debe confirmar la contraseña';
     if (value !== password) return 'Las contraseñas no coinciden';
     return '';
   };
@@ -620,6 +627,7 @@ export default function Register() {
                   placeholder="Nombre"
                   value={formData.nombre}
                   onChange={handleInputChange}
+                  $hasError={!!errors.nombre}
                 />
                 {errors.nombre && <WarningMessage>{errors.nombre}</WarningMessage>}
               </InputGroup>
@@ -633,6 +641,7 @@ export default function Register() {
                   placeholder="Apellidos"
                   value={formData.apellidos}
                   onChange={handleInputChange}
+                  $hasError={!!errors.apellidos}
                 />
                 {errors.apellidos && <WarningMessage>{errors.apellidos}</WarningMessage>}
               </InputGroup>
@@ -648,6 +657,7 @@ export default function Register() {
                   placeholder="Correo electrónico"
                   value={formData.email}
                   onChange={handleInputChange}
+                  $hasError={!!errors.email}
                 />
                 {errors.email && <WarningMessage>{errors.email}</WarningMessage>}
               </InputGroup>
@@ -661,6 +671,7 @@ export default function Register() {
                   placeholder="Teléfono"
                   value={formData.telefono}
                   onChange={handleInputChange}
+                  $hasError={!!errors.telefono}
                 />
                 {errors.telefono && <WarningMessage>{errors.telefono}</WarningMessage>}
               </InputGroup>
@@ -677,6 +688,7 @@ export default function Register() {
                     placeholder="Contraseña"
                     value={formData.password}
                     onChange={handleInputChange}
+                    $hasError={!!errors.password}
                   />
                   <PasswordToggleButton
                     type="button"
@@ -699,6 +711,7 @@ export default function Register() {
                     placeholder="Confirmar contraseña"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
+                    $hasError={!!errors.confirmPassword}
                   />
                   <PasswordToggleButton
                     type="button"
