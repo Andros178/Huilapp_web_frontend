@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import iconNavbar from "../assets/images/navbar.PNG";
+import iconNavbar from "../assets/images/huilapp_imagotipo.png";
 import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser, FiPlus, FiLogOut } from "react-icons/fi";
 
 const parseJwt = (token) => {
