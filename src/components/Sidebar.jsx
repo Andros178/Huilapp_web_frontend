@@ -75,7 +75,8 @@ export default function Sidebar() {
 
       <SidebarContainer id="app-sidebar" isOpen={isOpen}>
         <SidebarHeader>
-          <Logo src={iconNavbar} alt="Huilapp Logo" />
+          <Logo src={
+            iconNavbar} alt="Huilapp Logo" />
         </SidebarHeader>
 
         <Nav>
@@ -199,7 +200,7 @@ const SidebarHeader = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 140px;
+  width: 200px;
   height: auto;
   object-fit: contain;
 `;
