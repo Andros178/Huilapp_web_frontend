@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { Mail, XCircle } from "lucide-react"
 import styled from "styled-components"
 import apiService from "../services/api.service"
+import ImgMitad from '../assets/mitad.png';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -214,7 +215,7 @@ const LoginPrompt = styled.div`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/mitad.png') center / contain no-repeat;
+  background: url(${ImgMitad}) center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {
