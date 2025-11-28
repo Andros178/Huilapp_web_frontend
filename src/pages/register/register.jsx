@@ -46,6 +46,7 @@ const NavButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 4px;
@@ -68,6 +69,7 @@ const RegisterContainer = styled.div`
   align-items: flex-start;
   padding: 40px 24px;
   background-color: #ffffff;
+  overflow-y: auto;
 
   @media (max-width: 768px) {
     padding: 30px 16px;
@@ -75,17 +77,13 @@ const RegisterContainer = styled.div`
 `;
 
 const FormSection = styled.div`
-  background-color: #f5f5dc;
-  padding: 40px;
+  padding: 60px 80px;
   border-radius: 8px;
   width: 100%;
-  max-width: 600px;
-  overflow-y: auto;
-  max-height: calc(100vh - 160px);
+  max-width: 1000px;
 
   @media (max-width: 768px) {
     padding: 30px 20px;
-    max-height: none;
   }
 `;
 
@@ -94,7 +92,7 @@ const Form = styled.form`
 `;
 
 const FormTitle = styled.h2`
-  font-size: 32px;
+  font-size: 40px;
   font-weight: bold;
   color: #0d9488;
   margin: 0 0 12px 0;
@@ -105,8 +103,9 @@ const FormTitle = styled.h2`
   }
 `;
 
-const FormSubtitle = styled.p`
+const FormSubtitle = styled.h3`
   font-size: 16px;
+  font-weight: bold;
   color: #4b5563;
   margin: 0 0 30px 0;
   line-height: 1.6;
@@ -119,8 +118,8 @@ const FormSubtitle = styled.p`
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 40px;
+  margin-bottom: 30px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -144,7 +143,7 @@ const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
   font-size: 14px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid ${props => props.$hasError ? '#dc2626' : '#e0e0e0'};
   border-radius: 6px;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -152,8 +151,8 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #0d9488;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    border-color: ${props => props.$hasError ? '#dc2626' : '#0d9488'};
+    box-shadow: 0 0 0 3px ${props => props.$hasError ? 'rgba(220, 38, 38, 0.1)' : 'rgba(13, 148, 136, 0.1)'};
   }
 
   &::placeholder {
@@ -257,6 +256,7 @@ const LegalText = styled.p`
   color: #4b5563;
   margin: 20px 0;
   line-height: 1.6;
+  text-align: center;
 `;
 
 const LegalLink = styled.a`
@@ -271,20 +271,24 @@ const LegalLink = styled.a`
 `;
 
 const SubmitButton = styled.button`
-  width: 100%;
-  padding: 14px 28px;
-  font-size: 16px;
+  width: 40%;
+  padding: 16px 28px;
+  font-size: 18px;
   font-weight: 600;
   color: #ffffff;
-  background-color: #0d9488;
+  background: linear-gradient(135deg, #0d9488 0%, #0d7a72 100%);
   border: none;
-  border-radius: 6px;
+  border-radius: 40px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 20px;
+  transition: all 0.3s ease;
+  margin: 20px auto 0;
+  display: block;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 
   &:hover:not(:disabled) {
-    background-color: #0d7a72;
+    background: linear-gradient(135deg, #0d7a72 0%, #0a6860 100%);
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
+    transform: translateY(-2px);
   }
 
   &:disabled {
@@ -293,8 +297,9 @@ const SubmitButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 12px 24px;
-    font-size: 15px;
+    padding: 14px 24px;
+    font-size: 16px;
+    width: 60%;
   }
 `;
 
@@ -434,40 +439,47 @@ export default function Register() {
   const [showExistingUserModal, setShowExistingUserModal] = useState(false);
 
   const validateNombre = (value) => {
-    if (!value.trim()) return 'El nombre es requerido';
-    if (value.length > 60) return 'El nombre no puede exceder 60 caracteres';
+    if (!value.trim()) return 'El nombre es obligatorio';
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,20}$/.test(value)) {
+      return 'Debe tener entre 3 y 20 letras, sin números';
+    }
     return '';
   };
 
   const validateApellidos = (value) => {
-    if (!value.trim()) return 'Los apellidos son requeridos';
-    if (value.length > 60) return 'Los apellidos no pueden exceder 60 caracteres';
+    if (!value.trim()) return 'El apellido es obligatorio';
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,20}$/.test(value)) {
+      return 'Debe tener entre 3 y 20 letras, sin números';
+    }
     return '';
   };
 
   const validateEmail = (value) => {
-    if (!value.trim()) return 'El email es requerido';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) return 'Por favor ingresa un correo electrónico válido';
+    if (!value.trim()) return 'El correo es obligatorio';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return 'Correo inválido';
+    }
     return '';
   };
 
   const validateTelefono = (value) => {
-    if (!value.trim()) return 'El teléfono es requerido';
-    const phoneRegex = /^\d+$/;
-    if (!phoneRegex.test(value)) return 'El teléfono debe contener solo números';
-    if (value.length !== 10) return 'El teléfono debe tener exactamente 10 dígitos';
+    if (!value.trim()) return 'El teléfono es obligatorio';
+    if (!/^\d{10}$/.test(value)) {
+      return 'El teléfono debe tener exactamente 10 dígitos numéricos';
+    }
     return '';
   };
 
   const validatePassword = (value) => {
-    if (!value.trim()) return 'La contraseña es requerida';
-    if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    if (!value) return 'La contraseña es obligatoria';
+    if (!/^(?=.*[0-9])(?=.*[!@#$%^&*]).{8,20}$/.test(value)) {
+      return 'Debe tener 8-20 caracteres, un número y al menos un carácter especial permitido (! @ # $ % ^ & *)';
+    }
     return '';
   };
 
   const validateConfirmPassword = (value, password) => {
-    if (!value.trim()) return 'Confirmar contraseña es requerido';
+    if (!value) return 'Debe confirmar la contraseña';
     if (value !== password) return 'Las contraseñas no coinciden';
     return '';
   };
@@ -616,6 +628,7 @@ export default function Register() {
                   placeholder="Nombre"
                   value={formData.nombre}
                   onChange={handleInputChange}
+                  $hasError={!!errors.nombre}
                 />
                 {errors.nombre && <WarningMessage>{errors.nombre}</WarningMessage>}
               </InputGroup>
@@ -629,6 +642,7 @@ export default function Register() {
                   placeholder="Apellidos"
                   value={formData.apellidos}
                   onChange={handleInputChange}
+                  $hasError={!!errors.apellidos}
                 />
                 {errors.apellidos && <WarningMessage>{errors.apellidos}</WarningMessage>}
               </InputGroup>
@@ -644,6 +658,7 @@ export default function Register() {
                   placeholder="Correo electrónico"
                   value={formData.email}
                   onChange={handleInputChange}
+                  $hasError={!!errors.email}
                 />
                 {errors.email && <WarningMessage>{errors.email}</WarningMessage>}
               </InputGroup>
@@ -657,6 +672,7 @@ export default function Register() {
                   placeholder="Teléfono"
                   value={formData.telefono}
                   onChange={handleInputChange}
+                  $hasError={!!errors.telefono}
                 />
                 {errors.telefono && <WarningMessage>{errors.telefono}</WarningMessage>}
               </InputGroup>
@@ -673,6 +689,7 @@ export default function Register() {
                     placeholder="Contraseña"
                     value={formData.password}
                     onChange={handleInputChange}
+                    $hasError={!!errors.password}
                   />
                   <PasswordToggleButton
                     type="button"
@@ -695,6 +712,7 @@ export default function Register() {
                     placeholder="Confirmar contraseña"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
+                    $hasError={!!errors.confirmPassword}
                   />
                   <PasswordToggleButton
                     type="button"

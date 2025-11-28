@@ -1,52 +1,82 @@
 // src/pages/locations/Locations.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { useLocation } from 'react-router-dom';
+import apiService from "../../services/api.service";
 
 const PRIMARY = "#008073";
-const API_BASE = "https://huilapp-backend.onrender.com/sites";
 
-/* ====================== */
-/*       UI STYLES        */
-/* ====================== */
+// ===================== estilos por categoría =====================
+
+const CATEGORY_STYLES = {
+  "comida y bebida": {
+    bg: "#FFF7ED", // naranja muy suave
+    border: "#FED7AA",
+  },
+  compras: {
+    bg: "#ECFEFF", // azul agua muy suave
+    border: "#A5F3FC",
+  },
+  "hoteles y alojamiento": {
+    bg: "#EEF2FF", // lila suave
+    border: "#C7D2FE",
+  },
+  "ocio y aire libre": {
+    bg: "#ECFDF5", // verde suave
+    border: "#BBF7D0",
+  },
+};
+
+const CATEGORY_ORDER = [
+  "comida y bebida",
+  "compras",
+  "hoteles y alojamiento",
+  "ocio y aire libre",
+];
+
+const getCatKey = (cat) => (cat || "").toLowerCase().trim();
+
+// ===================== styled =====================
 
 const Page = styled.div`
   width: 100%;
   min-height: 100vh;
+  background: #f3f4f6;
   display: flex;
   justify-content: center;
-  background: #f3f4f6;
-  font-family: "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 `;
 
 const Shell = styled.div`
   width: 100%;
-  max-width: 1100px;
+  max-width: 1200px; /* un poco más ancho como en AdminSites */
 `;
 
-const HeaderWrapper = styled.header`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+const Header = styled.header`
+  margin-top: 10px;
+  text-align: center;
 `;
 
-const SectionTitle = styled.h2`
-  margin-top: 24px;
+const Title = styled.h1`
   font-size: 22px;
   font-weight: 700;
   color: ${PRIMARY};
+  margin-bottom: 4px;
 `;
 
-/* ===== TOOLBAR / BUSCADOR ===== */
+const Subtitle = styled.p`
+  font-size: 13px;
+  color: #6b7280;
+`;
 
+// Buscador + filtros
 const Toolbar = styled.div`
-  margin-top: 20px;
+  margin-top: 18px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 0 8px;
-  position: relative; 
+  position: relative;
 `;
 
 const SearchWrapper = styled.div`
@@ -83,7 +113,7 @@ const SearchInput = styled.input`
   outline: none;
   height: 44px;
   width: 100%;
-  padding: 0 40px 0 10px;
+  padding: 0 40px 0 16px;
   font-size: 13px;
 `;
 
@@ -95,8 +125,6 @@ const SearchIcon = styled.span`
   font-size: 16px;
   color: #9ca3af;
 `;
-
-/* ===== PANEL DE FILTROS ===== */
 
 const FiltersPanel = styled.div`
   position: absolute;
@@ -152,63 +180,95 @@ const FiltersButton = styled.button`
   font-weight: 500;
   ${({ variant }) =>
     variant === "primary"
-      ? `
-    background: ${PRIMARY};
-    color: #ffffff;
-  `
-      : `
-    background: #f3f4f6;
-    color: #374151;
-  `}
+      ? `background: ${PRIMARY}; color: #fff;`
+      : `background: #f3f4f6; color: #374151;`};
 `;
 
-/* ===== GRID ===== */
-
-const SitesGridWrapper = styled.div`
-  margin-top: 24px;
+// Grid de tarjetas
+const GridWrapper = styled.div`
+  margin-top: 20px;
   padding-bottom: 24px;
 `;
 
-const SitesGrid = styled.div`
+const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 18px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 
-const SiteCard = styled.div`
+const Card = styled.div`
   display: grid;
-  grid-template-columns: 120px 1fr 72px;
+  grid-template-columns: 160px 1fr 60px; /* imagen más ancha a la izq + col de acciones */
   gap: 14px;
-  background: #ffffff;
-  padding: 14px;
+  background: ${({ $catKey }) =>
+    CATEGORY_STYLES[$catKey]?.bg || "#ffffff"};
+  border: 1px solid
+    ${({ $catKey }) =>
+      CATEGORY_STYLES[$catKey]?.border || "rgba(229,231,235,1)"};
+  padding: 14px 16px;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 150px 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "thumb info"
+      "thumb actions";
+  }
 `;
 
-const SiteThumbnail = styled.div`
-  width: 120px;
-  height: 90px;
+const Thumbnail = styled.div`
+  width: 100%;
+  aspect-ratio: 4 / 3; /* se adapta al ancho */
   border-radius: 16px;
   background-size: cover;
   background-position: center;
   background-image: ${({ src }) =>
-    src ? `url(${src})` : "linear-gradient(135deg,#facc15,#22c55e)"};
+    src
+      ? `url(${src})`
+      : "linear-gradient(135deg,#e5e7eb,#cbd5f5)"};
+  align-self: center; /* centrada verticalmente */
+
+  @media (max-width: 768px) {
+    grid-area: thumb;
+  }
 `;
 
-const SiteInfo = styled.div`
+const Info = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+
+  @media (max-width: 768px) {
+    grid-area: info;
+  }
 `;
 
 const SiteName = styled.h3`
   font-size: 14px;
   font-weight: 600;
   color: #111827;
+  margin: 0;
 `;
 
-const SiteMetaLine = styled.div`
+const MetaLine = styled.div`
   font-size: 11px;
   color: #6b7280;
   display: flex;
@@ -216,19 +276,47 @@ const SiteMetaLine = styled.div`
   gap: 4px;
 `;
 
-const IconBullet = styled.span`
+const MetaIcon = styled.span`
   font-size: 12px;
 `;
 
-const SiteActions = styled.div`
+// Estado (solo visual, sin filtros por estado ya)
+const StatusBadge = styled.span`
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+
+  ${({ state }) => {
+    if (state === "Aprobada") {
+      return `background:#dcfce7;color:#166534;`;
+    }
+    if (state === "Pendiente") {
+      return `background:#fef9c3;color:#854d0e;`;
+    }
+    if (state === "Rechazada") {
+      return `background:#fee2e2;color:#b91c1c;`;
+    }
+    return `background:#e5e7eb;color:#374151;`;
+  }}
+`;
+
+// Acciones
+const ActionsCol = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 8px;
   align-items: flex-end;
+
+  @media (max-width: 768px) {
+    grid-area: actions;
+  }
 `;
 
-const RoundIconButton = styled.button`
+const ActionButton = styled.button`
   width: 32px;
   height: 32px;
   border-radius: 999px;
@@ -239,18 +327,16 @@ const RoundIconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${({ variant }) =>
-    variant === "view"
-      ? "#16a34a"
-      : variant === "edit"
-      ? "#2563eb"
-      : "#dc2626"};
 
-  &:hover {
-    filter: brightness(0.96);
-  }
+  ${({ variant }) => {
+    if (variant === "view") return `background:#16a34a;`;
+    if (variant === "edit") return `background:#2563eb;`;
+    if (variant === "delete") return `background:#dc2626;`;
+    return `background:#6b7280;`;
+  }}
 `;
 
+// Mensajes
 const MessageBox = styled.div`
   margin-top: 20px;
   text-align: center;
@@ -258,160 +344,208 @@ const MessageBox = styled.div`
   color: #6b7280;
 `;
 
-/* ====================== */
-/*  COMPONENTE PRINCIPAL  */
-/* ====================== */
+// ===================== componente =====================
 
 const Locations = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Parse query params to support deep links from the map
-  const queryParams = React.useMemo(() => {
-    const p = new URLSearchParams(location.search);
-    return {
-      q: p.get('q') || '',
-      categoria: p.get('categoria') || '',
-      pet: p.get('pet') || '',
-      kids: p.get('kids') || ''
-    };
-  }, [location.search]);
-
-  const [allSites, setAllSites] = useState([]);
-  const [siteList, setSiteList] = useState([]);
-
+  const [sites, setSites] = useState([]);
   const [search, setSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [kidsFilter, setKidsFilter] = useState(false);
   const [petFilter, setPetFilter] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_PUBLIC = "https://huilapp-backend.onrender.com/sites";
-
-  /* ==========================
-     Cargar MIS SITIOS
-  ========================== */
-  async function loadMySites() {
+  // ------- helper: mapear respuesta del back -------
+  const mapRemoteToLocal = (item) => {
+    // fotos
+    let fotosArr = [];
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Debes iniciar sesión.");
-        return;
+      if (Array.isArray(item.fotos)) {
+        fotosArr = item.fotos;
+      } else if (typeof item.fotos === "string" && item.fotos.trim() !== "") {
+        const parsed = JSON.parse(item.fotos);
+        if (Array.isArray(parsed)) fotosArr = parsed;
       }
+    } catch (e) {}
 
-      const res = await fetch(`${API_BASE}/my-sites`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    const image =
+      fotosArr[0] ||
+      "https://via.placeholder.com/400x300.png?text=Sin+imagen";
 
-      const data = await res.json();
-      const arr = Array.isArray(data) ? data : [];
+    // subcategorías
+    let subcategories = [];
+    try {
+      if (Array.isArray(item.subcategorias)) {
+        subcategories = item.subcategorias;
+      } else if (
+        typeof item.subcategorias === "string" &&
+        item.subcategorias.trim() !== ""
+      ) {
+        const parsed = JSON.parse(item.subcategorias);
+        if (Array.isArray(parsed)) subcategories = parsed;
+      }
+    } catch (e) {}
 
-      setAllSites(arr);
-      setSiteList(arr);
-    } catch (e) {
-      setError("Error cargando tus sitios.");
-    }
-  }
-
-  useEffect(() => {
-    // If the page was opened with query params, load public sites matching them
-    const { q, categoria, pet, kids } = queryParams;
-    if (q || categoria || pet || kids) {
-      // fetch public sites
-      (async () => {
-        try {
-          const params = new URLSearchParams();
-          if (q) params.append('q', q);
-          if (categoria) params.append('categoria', categoria);
-          if (pet) params.append('pet_friendly', pet);
-          if (kids) params.append('kids_friendly', kids);
-          const res = await fetch(`${API_PUBLIC}?${params.toString()}`);
-          const data = await res.json();
-          const arr = Array.isArray(data) ? data : [];
-          setAllSites(arr);
-          setSiteList(arr);
-        } catch (e) {
-          setError('Error cargando sitios públicos.');
-        }
-      })();
-    } else {
-      loadMySites();
-    }
-  }, [queryParams]);
-
-  /* ==========================
-     Filtrar en el frontend
-  ========================== */
-  const applyFilters = (list) => {
-    return list.filter((site) => {
-      const term = search.trim().toLowerCase();
-      const name = (site.nombre || "").toLowerCase();
-      const category = (site.categoria || "").toLowerCase();
-
-      const matchesText =
-        !term || name.includes(term) || category.includes(term);
-
-      const matchesCategory =
-        !categoryFilter || site.categoria === categoryFilter;
-
-      const matchesKids = !kidsFilter || site.kids_friendly === true;
-      const matchesPet = !petFilter || site.pet_friendly === true;
-
-      return matchesText && matchesCategory && matchesKids && matchesPet;
-    });
+    return {
+      id: String(item.id_sitio || item.id || item._id || Math.random()),
+      backendId: item.id_sitio,
+      title: item.nombre || "Sin título",
+      address: item.direccion || "",
+      phone: item.telefono || "",
+      image,
+      state: item.state || "Pendiente",
+      category: item.categoria || "",
+      kidsFriendly: !!item.kids_friendly,
+      petFriendly: !!item.pet_friendly,
+      subcategories,
+      raw: item,
+    };
   };
 
-  function searchSites() {
-    setSiteList(applyFilters(allSites));
-    setShowFilters(false);
-  }
-
-  function resetFilters() {
-    setCategoryFilter(null);
-    setKidsFilter(false);
-    setPetFilter(false);
-    setSearch("");
-    setSiteList(allSites);
-  }
-
-  /* ==========================
-     Eliminar sitio
-  ========================== */
-  async function borrarSitio(id) {
+  // ------- cargar mis sitios -------
+  const loadSites = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const token = localStorage.getItem("token");
+      const res = await apiService.get("/sites/my-sites");
+      const data = res.data || res;
+      if (Array.isArray(data)) {
+        setSites(data.map(mapRemoteToLocal));
+      } else {
+        setSites([]);
+      }
+    } catch (e) {
+      console.error("Error cargando mis sitios:", e);
+      const msg =
+        e?.response?.data?.error ||
+        e?.response?.data?.message ||
+        e.message ||
+        "Error al cargar tus sitios.";
+      setError(msg);
+      setSites([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      await fetch(`${API_BASE}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+  useEffect(() => {
+    loadSites();
+  }, []);
+
+  // ------- filtrado (en memoria) -------
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    let list = [...sites];
+
+    if (q) {
+      list = list.filter((s) => {
+        const subcatsText = (s.subcategories || []).join(" ").toLowerCase();
+        return (
+          s.title.toLowerCase().includes(q) ||
+          s.address.toLowerCase().includes(q) ||
+          (s.category || "").toLowerCase().includes(q) ||
+          subcatsText.includes(q)
+        );
       });
+    }
 
-      loadMySites();
-    } catch (e) {}
-  }
+    if (categoryFilter) {
+      const keyFilter = getCatKey(categoryFilter);
+      list = list.filter(
+        (s) => getCatKey(s.category) === keyFilter
+      );
+    }
 
+    if (kidsFilter) {
+      list = list.filter((s) => s.kidsFriendly);
+    }
+
+    if (petFilter) {
+      list = list.filter((s) => s.petFriendly);
+    }
+
+    // ordenar igual que admin: por categoría y nombre
+    list.sort((a, b) => {
+      const catAKey = getCatKey(a.category);
+      const catBKey = getCatKey(b.category);
+
+      const idxA = CATEGORY_ORDER.indexOf(catAKey);
+      const idxB = CATEGORY_ORDER.indexOf(catBKey);
+
+      if (idxA !== -1 || idxB !== -1) {
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        if (idxA !== idxB) return idxA - idxB;
+      }
+
+      const nameA = a.title.toLowerCase();
+      const nameB = b.title.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    return list;
+  }, [sites, search, categoryFilter, kidsFilter, petFilter]);
+
+  // ------- handlers de acciones -------
+  const handleSearchSubmit = () => {
+    setSearch((prev) => prev.trim());
+  };
+
+  const handleView = (site) => {
+    const id = site.backendId || site.raw?.id_sitio || site.id;
+    if (!id) return;
+    navigate(`/sites/${id}`);
+  };
+
+  const handleEdit = (site) => {
+    const id = site.backendId || site.raw?.id_sitio || site.id;
+    if (!id) return;
+    navigate(`/sites/${id}/edit`);
+  };
+
+  const handleDelete = (site) => {
+    // por ahora lo mandamos a la vista de edición, donde ya tienes eliminar
+    const id = site.backendId || site.raw?.id_sitio || site.id;
+    if (!id) return;
+    navigate(`/sites/${id}/edit`);
+  };
+
+  // ================== render ==================
   return (
     <Page>
       <Shell>
-        <HeaderWrapper>
-          <SectionTitle>Mis sitios creados</SectionTitle>
-        </HeaderWrapper>
+        <Header>
+          <Title>Mis sitios creados</Title>
+          <Subtitle>
+            Gestiona los lugares que has registrado en Huilapp.
+          </Subtitle>
+        </Header>
 
         <Toolbar>
           <SearchWrapper>
-            <FilterButton onClick={() => setShowFilters(!showFilters)}>
+            <FilterButton
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+            >
               ☰
             </FilterButton>
 
             <SearchInner>
               <SearchInput
-                placeholder="Buscar por nombre o categoría"
+                placeholder="Buscar por nombre, dirección, categoría o subcategoría"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchSites()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSearchSubmit();
+                  }
+                }}
               />
               <SearchIcon>🔍</SearchIcon>
             </SearchInner>
@@ -424,51 +558,64 @@ const Locations = () => {
                   active={categoryFilter === "Comida y bebida"}
                   onClick={() => setCategoryFilter("Comida y bebida")}
                 >
-                  <FilterIcon>🍽️</FilterIcon> Comida y bebida
+                  <FilterIcon>🍽️</FilterIcon>
+                  <span>Comida y bebida</span>
                 </FilterItem>
 
                 <FilterItem
                   active={categoryFilter === "Compras"}
                   onClick={() => setCategoryFilter("Compras")}
                 >
-                  <FilterIcon>🛒</FilterIcon> Compras
+                  <FilterIcon>🛒</FilterIcon>
+                  <span>Compras</span>
                 </FilterItem>
 
                 <FilterItem
                   active={categoryFilter === "Hoteles y alojamiento"}
                   onClick={() => setCategoryFilter("Hoteles y alojamiento")}
                 >
-                  <FilterIcon>🏨</FilterIcon> Hoteles y alojamiento
+                  <FilterIcon>🏨</FilterIcon>
+                  <span>Hoteles y alojamiento</span>
                 </FilterItem>
 
                 <FilterItem
                   active={categoryFilter === "Ocio y aire libre"}
                   onClick={() => setCategoryFilter("Ocio y aire libre")}
                 >
-                  <FilterIcon>🌳</FilterIcon> Ocio y aire libre
+                  <FilterIcon>🌳</FilterIcon>
+                  <span>Ocio y aire libre</span>
                 </FilterItem>
 
                 <FilterItem
                   active={kidsFilter}
-                  onClick={() => setKidsFilter(!kidsFilter)}
+                  onClick={() => setKidsFilter((prev) => !prev)}
                 >
-                  <FilterIcon>👶</FilterIcon> Apto para niños
+                  <FilterIcon>👶</FilterIcon>
+                  <span>Apto para niños</span>
                 </FilterItem>
 
                 <FilterItem
                   active={petFilter}
-                  onClick={() => setPetFilter(!petFilter)}
+                  onClick={() => setPetFilter((prev) => !prev)}
                 >
-                  <FilterIcon>🐾</FilterIcon> Apto para mascotas
+                  <FilterIcon>🐾</FilterIcon>
+                  <span>Apto para mascotas</span>
                 </FilterItem>
               </FiltersList>
 
               <FiltersActions>
-                <FiltersButton variant="primary" onClick={searchSites}>
-                  Buscar
+                <FiltersButton variant="primary" onClick={handleSearchSubmit}>
+                  Aplicar
                 </FiltersButton>
-
-                <FiltersButton onClick={resetFilters}>
+                <FiltersButton
+                  onClick={() => {
+                    setCategoryFilter(null);
+                    setKidsFilter(false);
+                    setPetFilter(false);
+                    setSearch("");
+                    setShowFilters(false);
+                  }}
+                >
                   Restablecer
                 </FiltersButton>
               </FiltersActions>
@@ -476,69 +623,65 @@ const Locations = () => {
           )}
         </Toolbar>
 
+        {loading && <MessageBox>Cargando sitios...</MessageBox>}
         {error && <MessageBox>{error}</MessageBox>}
+        {!loading && !error && filtered.length === 0 && (
+          <MessageBox>No tienes sitios que coincidan con la búsqueda.</MessageBox>
+        )}
 
-        <SitesGridWrapper>
-          <SitesGrid>
-            {siteList.map((site) => {
-              const id = site.id_sitio;
-
-              let firstFoto = null;
-              try {
-                const arr = JSON.parse(site.fotos);
-                if (Array.isArray(arr)) firstFoto = arr[0] || null;
-              } catch {}
+        <GridWrapper>
+          <Grid>
+            {filtered.map((site) => {
+              const catKey = getCatKey(site.category);
 
               return (
-                <SiteCard key={id}>
-                  <SiteThumbnail src={firstFoto} />
+                <Card
+                  key={site.id}
+                  $catKey={catKey}
+                  onClick={() => handleView(site)}
+                >
+                  <Thumbnail src={site.image} />
 
-                  <SiteInfo>
-                    <SiteName>{site.nombre}</SiteName>
+                  <Info>
+                    <SiteName>{site.title}</SiteName>
+                    <MetaLine>
+                      <MetaIcon>📍</MetaIcon>
+                      <span>{site.address || "Sin dirección"}</span>
+                    </MetaLine>
+                    <MetaLine>
+                      <MetaIcon>🏷</MetaIcon>
+                      <span>{site.category || "Sin categoría"}</span>
+                    </MetaLine>
+                    <MetaLine>
+                      <MetaIcon>👶</MetaIcon>
+                      <span>
+                        Apto niños: {site.kidsFriendly ? "Sí" : "No"}
+                      </span>
+                    </MetaLine>
+                    <MetaLine>
+                      <MetaIcon>🐾</MetaIcon>
+                      <span>
+                        Apto mascotas: {site.petFriendly ? "Sí" : "No"}
+                      </span>
+                    </MetaLine>
+                    <StatusBadge state={site.state}>
+                      {site.state || "Pendiente"}
+                    </StatusBadge>
+                  </Info>
 
-                    <SiteMetaLine>
-                      <IconBullet>📍</IconBullet>
-                      {site.direccion}
-                    </SiteMetaLine>
-
-                    <SiteMetaLine>
-                      <IconBullet>🏷</IconBullet>
-                      {site.categoria}
-                    </SiteMetaLine>
-
-                    <SiteMetaLine>
-                      <IconBullet>📌</IconBullet>
-                      {site.state}
-                    </SiteMetaLine>
-                  </SiteInfo>
-
-                  <SiteActions>
-                    <RoundIconButton
-                      variant="view"
-                      onClick={() => navigate(`/sites/${id}`)}
-                    >
-                      👁
-                    </RoundIconButton>
-
-                    <RoundIconButton
-                      variant="edit"
-                      onClick={() => navigate(`/sites/${id}/edit`)}
-                    >
-                      ✎
-                    </RoundIconButton>
-
-                    <RoundIconButton
-                      variant="delete"
-                      onClick={() => borrarSitio(id)}
-                    >
-                      🗑
-                    </RoundIconButton>
-                  </SiteActions>
-                </SiteCard>
+                  <ActionsCol
+                    onClick={(e) => {
+                      // para que los botones no disparen el onClick del card
+                      e.stopPropagation();
+                    }}
+                  >
+                   
+                  </ActionsCol>
+                </Card>
               );
             })}
-          </SitesGrid>
-        </SitesGridWrapper>
+          </Grid>
+        </GridWrapper>
       </Shell>
     </Page>
   );

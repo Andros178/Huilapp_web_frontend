@@ -220,6 +220,21 @@ export default function Maps() {
     document.head.appendChild(s);
   }, []);
 
+  // small hover/mouseover styles for detail buttons and interactive controls
+  useEffect(() => {
+    const id = 'huilapp-detail-btn-style';
+    if (document.getElementById(id)) return;
+    const s = document.createElement('style');
+    s.id = id;
+    s.innerHTML = `
+      .huil-btn-hover { transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease; }
+      .huil-btn-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(11,159,136,0.08); }
+      .huil-btn-hover:active { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(11,159,136,0.06); }
+      .huil-btn-hover.danger:hover { box-shadow: 0 8px 18px rgba(0,0,0,0.06); }
+    `;
+    document.head.appendChild(s);
+  }, []);
+
   useEffect(() => {
     // update markers when sites change
     const group = markersGroupRef.current;
@@ -797,6 +812,22 @@ export default function Maps() {
     return `${mins} min`;
   }
 
+  // compute total reviews for the selected site (try several possible fields, fall back to loaded `reviews`)
+  const totalReviews = (() => {
+    if (!selected) return 0;
+    // common property names used across backends
+    if (Array.isArray(selected.resenas)) return selected.resenas.length;
+    if (Array.isArray(selected.reseñas)) return selected.reseñas.length;
+    if (Array.isArray(selected.reviews)) return selected.reviews.length;
+    if (typeof selected.reseñas_count === 'number') return selected.reseñas_count;
+    if (typeof selected.resenas_count === 'number') return selected.resenas_count;
+    if (typeof selected.reviews_count === 'number') return selected.reviews_count;
+    if (typeof selected.num_reviews === 'number') return selected.num_reviews;
+    // fallback to reviews loaded in state
+    try { if (Array.isArray(reviews) && reviews.length) return reviews.length; } catch (e) {}
+    return 0;
+  })();
+
   return (
     <PageContainer>
       <MapWrapper>
@@ -874,7 +905,7 @@ export default function Maps() {
             <SearchBtn aria-label="Buscar" onClick={() => fetchSites({ q: query })}>Buscar</SearchBtn>
           </SearchWrapper>
 
-              <LocateBtn onClick={() => locateMe()} aria-label="Centrarme" title="Centrarme">
+              <LocateBtn className="huil-btn-hover" onClick={() => locateMe()} aria-label="Centrarme" title="Centrarme">
                 {locating ? '⏳' : '📍'}
               </LocateBtn>
 
@@ -903,7 +934,7 @@ export default function Maps() {
         {selected && (
           <DetailPanel role="region" aria-label="Detalle del sitio">
             <DetailHeader>
-              <BackBtn onClick={() => setSelected(null)}>‹</BackBtn>
+              <BackBtn className="huil-btn-hover" onClick={() => setSelected(null)}>‹</BackBtn>
               <h3>{selected.nombre || selected.name || 'Sitio'}</h3>
             </DetailHeader>
 
@@ -916,36 +947,10 @@ export default function Maps() {
 
               <MetaRow>
                 <div className="category">{selected.categoria || ''}</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div className="rating">{(selected.avg_rating || selected.rating) ? `${Number(selected.avg_rating || selected.rating).toFixed(1)} ★` : ''}</div>
-                    <DirectionsButton onClick={() => handleComoLlegar()}>Como llegar</DirectionsButton>
-                    <DirectionsButton onClick={() => {
-                      const dest = [Number(selected.latitud), Number(selected.longitud)];
-                      if (currentPosition && currentPosition.latitude && currentPosition.longitude) {
-                        const originParam = `${currentPosition.latitude},${currentPosition.longitude}`;
-                        const destParam = `${dest[0]},${dest[1]}`;
-                        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originParam)}&destination=${encodeURIComponent(destParam)}&travelmode=driving`;
-                        window.open(url, '_blank');
-                        return;
-                      }
-                      // fallback: try to obtain current position and open maps with origin when available
-                      if ('geolocation' in navigator) {
-                        navigator.geolocation.getCurrentPosition((p) => {
-                          const originParam = `${p.coords.latitude},${p.coords.longitude}`;
-                          const destParam = `${dest[0]},${dest[1]}`;
-                          const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originParam)}&destination=${encodeURIComponent(destParam)}&travelmode=driving`;
-                          window.open(url, '_blank');
-                        }, () => {
-                          // if failed, open with destination only
-                          const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest[0]+','+dest[1])}`;
-                          window.open(url, '_blank');
-                        }, { enableHighAccuracy: true, timeout: 8000 });
-                      } else {
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest[0]+','+dest[1])}`;
-                        window.open(url, '_blank');
-                      }
-                    }}>Abrir en Maps</DirectionsButton>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div className="rating">{(selected.avg_rating || selected.rating) ? `${Number(selected.avg_rating || selected.rating).toFixed(1)} ★${totalReviews ? ` (${totalReviews})` : ''}` : ''}</div>
+                    <DirectionsButton className="huil-btn-hover" onClick={() => handleComoLlegar()}>Como llegar</DirectionsButton>
                   </div>
                   <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
                     {directionsLoading ? 'Trazando ruta...' : (directionsInfo ? `${formatDistance(directionsInfo.distance)} · ${formatDuration(directionsInfo.duration)}` : '')}
@@ -954,8 +959,8 @@ export default function Maps() {
               </MetaRow>
 
               <Tabs>
-                <Tab active={detailTab === 'summary'} onClick={() => setDetailTab('summary')}>Resumen</Tab>
-                <Tab active={detailTab === 'reviews'} onClick={() => setDetailTab('reviews')}>Reseñas</Tab>
+                <Tab className="huil-btn-hover" active={detailTab === 'summary'} onClick={() => setDetailTab('summary')}>Resumen</Tab>
+                <Tab className="huil-btn-hover" active={detailTab === 'reviews'} onClick={() => setDetailTab('reviews')}>Reseñas</Tab>
               </Tabs>
 
               {detailTab === 'summary' && (
@@ -1042,8 +1047,8 @@ export default function Maps() {
                                           <ReviewActions>
                                             {isOwner ? (
                                               <>
-                                                <ActionButton className="danger" onClick={() => openDeleteReview({ id, ...r })}>Eliminar</ActionButton>
-                                                <ActionButton onClick={() => openEditReview(r)}>Editar</ActionButton>
+                                                <ActionButton className="huil-btn-hover danger" onClick={() => openDeleteReview({ id, ...r })}>Eliminar</ActionButton>
+                                                <ActionButton className="huil-btn-hover" onClick={() => openEditReview(r)}>Editar</ActionButton>
                                               </>
                                             ) : (
                                               <div style={{ color:'#888', fontSize:13 }}>No disponible</div>
@@ -1526,7 +1531,22 @@ const DirectionsButton = styled.button`
 `;
 
 const Tabs = styled.div`display:flex; gap:8px; margin-top:4px;`;
-const Tab = styled.div`padding:6px 10px; border-radius:8px; background:${p => p.active ? '#0b9f88' : '#fff'}; color:${p => p.active ? '#fff' : '#333'}; border:1px solid #e6e6e6; font-weight:600;`;
+const Tab = styled.div`
+  padding:6px 10px;
+  border-radius:8px;
+  background: ${p => p.active ? '#0b9f88' : '#fff'};
+  color: ${p => p.active ? '#fff' : '#333'};
+  border: 1px solid #e6e6e6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+    background: ${p => p.active ? '#0b9f88' : '#f8fffb'};
+  }
+  &:active { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+`;
 
 const Description = styled.div`font-size:13px; color:#444; line-height:1.4;`;
 

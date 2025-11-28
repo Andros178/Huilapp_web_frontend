@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import iconNavbar from "../assets/images/navbar.PNG";
-import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser, FiPlus } from "react-icons/fi";
-import logoutIcon from "../assets/images/Vector.png";
+import iconNavbar from "../assets/images/huilapp_imagotipo.png";
+import { FiHome, FiMapPin, FiMap, FiMessageSquare, FiUser, FiPlus, FiLogOut } from "react-icons/fi";
 
 const parseJwt = (token) => {
   try {
@@ -27,6 +26,7 @@ export default function Sidebar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [userName, setUserName] = useState(null);
   const location = useLocation();
 
   // 🔄 Se ejecuta cada vez que cambia la ruta
@@ -48,6 +48,15 @@ export default function Sidebar() {
     const admin =
       payload && payload.rol && payload.rol.toLowerCase() === "administrador";
     setIsAdmin(Boolean(admin));
+    // Intentar obtener nombre de usuario para mostrar en el footer
+    const nameFromPayload = payload?.nombre || payload?.name || payload?.usuario || payload?.email;
+    if (nameFromPayload) {
+      // Si viene un email, mostrar solo la parte antes de @
+      const shortName = String(nameFromPayload).includes("@")
+        ? String(nameFromPayload).split("@")[0]
+        : nameFromPayload;
+      setUserName(shortName);
+    }
   }, [location.pathname]); // ⬅ antes estaba []
 
   // No renderizar el Sidebar si no está autenticado
@@ -55,16 +64,19 @@ export default function Sidebar() {
     return null;
   }
 
-  const sitesPath = isAdmin ? "/admin/sites" : "/locations";
-  const sitesLabel = isAdmin ? "Sitios (admin)" : "Mis sitios";
+  const sitesPath = isAdmin ? "/admin/panelview" : "/locations";
+  const sitesLabel = isAdmin ? "Dashboard" : "Mis sitios";
 
   return (
     <>
-      <MenuButton onClick={() => setIsOpen(true)}>☰</MenuButton>
+      <MenuButton onClick={() => setIsOpen((s) => !s)} aria-expanded={isOpen} aria-controls="app-sidebar">
+        {isOpen ? "✕" : "☰"}
+      </MenuButton>
 
-      <SidebarContainer isOpen={isOpen}>
+      <SidebarContainer id="app-sidebar" isOpen={isOpen}>
         <SidebarHeader>
-          <Logo src={iconNavbar} alt="Huilapp Logo" />
+          <Logo src={
+            iconNavbar} alt="Huilapp Logo" />
         </SidebarHeader>
 
         <Nav>
@@ -104,11 +116,15 @@ export default function Sidebar() {
           </NavItem>
         </Nav>
 
-        {/* ---------- BOTÓN DE CERRAR SESIÓN ---------- */}
-        <LogoutButton onClick={() => setShowLogoutConfirm(true)}>
-          <LogoutIcon src={logoutIcon} alt="Cerrar sesión" />
-          <span>Cerrar sesión</span>
-        </LogoutButton>
+        {/* ---------- FOOTER: usuario + CERRAR SESIÓN ---------- */}
+        <NavFooter>
+          <LogoutButton aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => setShowLogoutConfirm(true)}>
+            <LogoutIconWrapper>
+              <FiLogOut size={18} />
+            </LogoutIconWrapper>
+            <span>Cerrar sesión</span>
+          </LogoutButton>
+        </NavFooter>
 
         {showLogoutConfirm && (
           <ConfirmModalOverlay onClick={() => setShowLogoutConfirm(false)}>
@@ -120,7 +136,7 @@ export default function Sidebar() {
                 <ModalConfirm
                   onClick={async () => {
                     try {
-                      await fetch("https://huilapp-backend.onrender.com/users/logout", {
+                      await fetch("http://158.69.60.80/api/users/logout", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                       });
@@ -157,16 +173,21 @@ const SidebarContainer = styled.aside`
   left: 0;
   height: 100vh;
   background: #ffffff;
-  width: ${({ isOpen }) => (isOpen ? "260px" : "0")};
+  width: ${({ isOpen }) => (isOpen ? "85vw" : "0")};
+  max-width: 320px;
   overflow: hidden;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.12);
   border-right: 1px solid #eaeaea;
-  transition: width 0.3s ease;
+  transition: width 0.26s cubic-bezier(.2,.9,.2,1);
   z-index: 1000;
   font-family: "Roboto", sans-serif;
+  display: flex;
+  flex-direction: column;
 
   @media (min-width: 1024px) {
     width: 260px;
+    max-width: none;
+    
   }
 `;
 
@@ -179,7 +200,7 @@ const SidebarHeader = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 140px;
+  width: 200px;
   height: auto;
   object-fit: contain;
 `;
@@ -187,8 +208,11 @@ const Logo = styled.img`
 const Nav = styled.nav`
   display: flex;
   flex-direction: column;
-  padding: 20px 12px;
-  gap: 6px;
+  padding: 16px 12px 20px 12px;
+  gap: 8px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const NavItem = styled(Link)`
@@ -211,45 +235,81 @@ const NavItem = styled(Link)`
 `;
 
 const IconWrapper = styled.span`
-  display: none;
+  display: flex;
+  align-items: center;
+  min-width: 28px;
+  justify-content: center;
+
+  svg {
+    display: block;
+  }
 
   @media (min-width: 1024px) {
-    display: flex;
-    align-items: center;
+    min-width: 36px;
   }
 `;
 
 const LogoutButton = styled.button`
-  margin-top: 20px;
-  margin-left: 12px;
-  margin-right: 12px;
-  padding: 12px 16px;
-  width: calc(100% - 24px);
-  background: #ffe9e9;
+  padding: 10px 12px;
+  width: 100%;
+  background: transparent;
   color: #b80000;
-  border: none;
+  border: 1px solid rgba(184, 0, 0, 0.12);
   border-radius: 10px;
   font-size: 16px;
   cursor: pointer;
   display: flex;
-  gap: 12px;
   align-items: center;
-  transition: 0.25s ease;
+  justify-content: flex-start;
+  gap: 12px;
+  transition: all 0.22s ease;
 
   &:hover {
-    background: #ffcccc;
-    transform: translateX(4px);
+    background: rgba(184, 0, 0, 0.06);
+    transform: translateX(6px);
+    box-shadow: 0 4px 14px rgba(184, 0, 0, 0.07);
   }
 
   span {
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #8a0000;
   }
 `;
 
-const LogoutIcon = styled.img`
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+const LogoutIconWrapper = styled.span`
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184,0,0,0.06);
+  color: #b80000;
+`;
+
+const NavFooter = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px;
+  margin-top: auto;
+  
+  @media (min-width: 1024px) {
+    margin-bottom: 60px;
+  }
+`;
+
+const UserName = styled.div`
+  font-size: 14px;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f7f7f7;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const MenuButton = styled.button`

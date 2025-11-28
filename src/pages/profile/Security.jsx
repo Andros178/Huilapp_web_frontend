@@ -84,6 +84,7 @@ const Security = () => {
   const hasNumber = /(?=.*[0-9])/.test(newPassword);
   const hasSpecial = /(?=.*[!@#$%^&*])/.test(newPassword);
   const passwordsMatch = newPassword && confirmPassword === newPassword;
+  const showMismatch = confirmPassword && newPassword !== confirmPassword;
 
   const isFormValid = lengthMet && hasNumber && hasSpecial && passwordsMatch;
 
@@ -107,7 +108,7 @@ const Security = () => {
           <Left>
             <Form onSubmit={handleSubmit}>
               <Field>
-                <Label>Nueva contraseña</Label>
+                <Label data-required>Nueva contraseña</Label>
                 <InputWrapper>
                   <Input
                     type={showNew ? "text" : "password"}
@@ -123,7 +124,7 @@ const Security = () => {
               </Field>
 
               <Field>
-                <Label>Confirmar contraseña</Label>
+                <Label data-required>Confirmar contraseña</Label>
                 <InputWrapper>
                   <Input
                     type={showConfirm ? "text" : "password"}
@@ -135,7 +136,9 @@ const Security = () => {
                     {showConfirm ? <AiOutlineEyeInvisible size={18} /> : <AiOutlineEye size={18} />}
                   </EyeButton>
                 </InputWrapper>
-                {errors.confirmPassword && <ErrorMsg>{errors.confirmPassword}</ErrorMsg>}
+                {(errors.confirmPassword || showMismatch) && (
+                  <ErrorMsg>{errors.confirmPassword || 'Las contraseñas no coinciden'}</ErrorMsg>
+                )}
               </Field>
 
               <ReqList>
@@ -172,7 +175,11 @@ const Security = () => {
               )}
 
               <Buttons>
-                <PrimaryButton type="submit" disabled={!isFormValid || saving} aria-disabled={!isFormValid || saving}>
+                <PrimaryButton
+                  type="submit"
+                  disabled={saving}
+                  aria-disabled={!isFormValid || saving}
+                >
                   {saving ? "Guardando..." : "Actualizar contraseña"}
                 </PrimaryButton>
               </Buttons>
@@ -186,12 +193,9 @@ const Security = () => {
 
 export default Security;
 
-/* --------------------- STYLED COMPONENTS --------------------- */
+/* --------------------- ESTILOS MEJORADOS --------------------- */
 
 const Container = styled.div`
-  width: 100%;
-  min-height: 100vh;
-  background: #ffffff;
   display: flex;
   justify-content: center;
   padding: 40px 20px;
@@ -199,187 +203,50 @@ const Container = styled.div`
 
 const Card = styled.div`
   width: 100%;
-  max-width: 580px;
+  max-width: 880px;
   background: #fff;
-  padding: 25px;
-  border-radius: 18px;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.06);
+  padding: 35px 40px;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
 `;
 
 const HeaderTitle = styled.h2`
   text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: #000;
-  margin-bottom: 25px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #008073;
 `;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  color: #333;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 36px 10px 12px; 
-  border-radius: 8px;
-  border: 1px solid #e6e6e6;
-  font-size: 14px;
-`;
-
-const Buttons = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 6px;
-`;
-
-const PrimaryButton = styled.button`
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #0d9488;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-`;
-
-const ErrorMsg = styled.div`
-  color: #b91c1c;
-  font-size: 13px;
-`;
-
-const SuccessMsg = styled.div`
-  color: #065f46;
-  font-size: 13px;
-`;
-
-const ReqList = styled.div`
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const Req = styled.div`
-  font-size: 13px;
-  color: ${(p) => (p.met ? '#059669' : '#7a7a7a')};
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
-const EyeButton = styled.button`
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  color: #6b6b6b;
-  cursor: pointer;
-`;
-
-/* --- Success modal styles --- */
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-`;
-
-const ModalBox = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-`;
-
-const ModalTitle = styled.h3`
-  margin: 0 0 8px 0;
-`;
-
-const ModalText = styled.p`
-  margin: 0 0 16px 0;
-  color: #333;
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const ModalButton = styled.button`
-  padding: 10px 14px;
-  background: #0d9488;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-`;
-
-/* --- Layout for form + avatar --- */
 const Content = styled.div`
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 40px;
 
-  @media (max-width: 820px) {
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
+  @media (max-width: 920px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const Left = styled.div`
-  flex: 1;
-`;
-
+/* --- PANEL DERECHO (AVATAR) --- */
 const Right = styled.div`
-  width: 200px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-
-  @media (max-width: 820px) {
-    width: auto;
-  }
 `;
 
 const AvatarBox = styled.div`
-  width: 200px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f5f5f5;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.06);
 `;
 
 const AvatarImg = styled.img`
@@ -389,54 +256,236 @@ const AvatarImg = styled.img`
 `;
 
 const AvatarInitial = styled.div`
-  font-size: 48px;
+  font-size: 60px;
   font-weight: 700;
-  color: #444;
+  color: #555;
 `;
 
-const AvatarActions = styled.div`
-  margin-top: 12px;
+/* --- PANEL IZQUIERDO (FORMULARIO) --- */
+const Left = styled.div`
+  flex: 1;
+`;
+
+const Form = styled.form`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 18px;
 `;
 
-const EditProfileButton = styled.button`
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid #0d9488;
-  color: #0d9488;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
 
-  &:hover {
-    background: #0d9488;
-    color: #fff;
+const Label = styled.label`
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+
+  &[data-required]::after {
+    content: "*";
+    color: #dc2626;
+    margin-left: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
   }
 `;
 
-/* Strength bar */
-const StrengthBar = styled.div`
-  margin-top: 8px;
-  height: 10px;
-  background: #e6e6e6;
-  border-radius: 8px;
+const InputWrapper = styled.div`
   position: relative;
   display: flex;
   align-items: center;
 `;
 
+const Input = styled.input`
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  font-size: 15px;
+  transition: 0.2s ease;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Hide native browser password reveal / autofill buttons */
+  &::-ms-clear,
+  &::-ms-reveal {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  &::-webkit-credentials-auto-fill-button,
+  &::-webkit-textfield-decoration-button {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #008073;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 128, 115, 0.12);
+  }
+`;
+
+const EyeButton = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  outline: none;
+  z-index: 2;
+
+  /* ensure clickable area doesn't overlap with native buttons */
+  padding: 6px;
+
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+`;
+
+/* --- REQUISITOS --- */
+const ReqList = styled.div`
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const Req = styled.div`
+  font-size: 14px;
+  color: ${(p) => (p.met ? "#059669" : "#9ca3af")};
+  font-weight: ${(p) => (p.met ? "500" : "400")};
+`;
+
+/* --- BARRA DE FUERZA --- */
+const StrengthBar = styled.div`
+  margin-top: 8px;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+`;
+
 const StrengthFill = styled.div`
   height: 100%;
   width: ${(p) => (p.score / 3) * 100}%;
-  background: ${(p) => (p.score === 3 ? '#059669' : p.score === 2 ? '#f59e0b' : '#ef4444')};
-  border-radius: 8px;
-  transition: width 180ms ease, background 180ms ease;
+  background: ${(p) =>
+    p.score === 3
+      ? "#10b981"
+      : p.score === 2
+      ? "#f59e0b"
+      : "#ef4444"};
+  transition: width 200ms ease, background 200ms ease;
 `;
 
-const StrengthText = styled.div`
-  position: absolute;
-  right: 8px;
-  font-size: 12px;
-  color: #333;
+const StrengthText = styled.span`
+  font-size: 13px;
+  color: #374151;
+  margin-left: 5px;
+`;
+
+/* --- BOTONES --- */
+const Buttons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const PrimaryButton = styled.button`
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  &:hover {
+    background: #0f766e;
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorMsg = styled.div`
+  font-size: 13px;
+  color: #dc2626;
+`;
+
+const SuccessMsg = styled.div`
+  font-size: 13px;
+  color: #059669;
+`;
+
+/* --- MODAL --- */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+`;
+
+const ModalBox = styled.div`
+  background: #fff;
+  padding: 28px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 20px;
+  margin-bottom: 10px;
+  font-weight: 600;
+`;
+
+const ModalText = styled.p`
+  color: #374151;
+  margin-bottom: 20px;
+  font-size: 15px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const ModalButton = styled.button`
+  padding: 10px 16px;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  &:hover {
+    background: #0f766e;
+  }
 `;

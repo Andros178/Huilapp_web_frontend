@@ -96,7 +96,7 @@ const MapSection = styled.div`
 
 const MapImage = styled.img`
   width: 100%;
-  max-width: 150px;
+  max-width: 250px;
   height: auto;
 `;
 
@@ -173,7 +173,7 @@ export default function Footer() {
         <FooterSection>
           <MapSection>
             <MapImage
-              src="src\assets\images\navbar.PNG?height=100&width=150"
+              src="src\assets\images\huilapp_imagotipo.png?height=100&width=150"
               alt="Mapa del Huila"
               loading="lazy"
             />

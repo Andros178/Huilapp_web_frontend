@@ -1,4 +1,4 @@
-// src/pages/admin/AdminSites.jsx
+// src/pages/admin/SitesVal.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -46,15 +46,6 @@ const CATEGORY_STYLES = {
     bg: "#ECFDF5",
     border: "#BBF7D0",
   },
-  // nueva categoría: sitios turísticos (con y sin tilde)
-  "sitios turisticos": {
-    bg: "#FEF2F2",
-    border: "#FCA5A5",
-  },
-  "sitios turísticos": {
-    bg: "#EFFFDB",
-    border: "#ABD880",
-  },
 };
 
 const CATEGORY_ORDER = [
@@ -62,7 +53,6 @@ const CATEGORY_ORDER = [
   "compras",
   "hoteles y alojamiento",
   "ocio y aire libre",
-  "sitios turisticos", // forma base para ordenar
 ];
 
 const getCatKey = (site) =>
@@ -264,19 +254,16 @@ const SitesGrid = styled.div`
   }
 `;
 
+// Card con imagen a la izquierda más ancha
 const SiteCard = styled.div`
   display: grid;
   grid-template-columns: 160px 1fr 70px;
   gap: 14px;
-  background: ${({ $catKey, $state }) =>
-    $state === "Rechazada"
-      ? "#f72f2fff" // rojo suave para rechazados
-      : CATEGORY_STYLES[$catKey]?.bg || "#ffffff"};
+  background: ${({ $catKey }) =>
+    CATEGORY_STYLES[$catKey]?.bg || "#ffffff"};
   border: 1px solid
-    ${({ $catKey, $state }) =>
-      $state === "Rechazada"
-        ? "#ff0000ff"
-        : CATEGORY_STYLES[$catKey]?.border || "rgba(229,231,235,1)"};
+    ${({ $catKey }) =>
+      CATEGORY_STYLES[$catKey]?.border || "rgba(229,231,235,1)"};
   padding: 14px 16px;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
@@ -382,82 +369,33 @@ const MessageBox = styled.div`
 // ======================
 // Component
 // ======================
-const AdminSites = () => {
+const SitesVal = () => {
   const navigate = useNavigate();
-  const [allSites, setAllSites] = useState([]);   // 👈 lista completa (incluye Pendientes)
-  const [siteList, setSiteList] = useState([]);   // 👈 lista filtrada para mostrar
-  const [activeTab, setActiveTab] = useState("Todos los Sitios");
+
+  const [siteList, setSiteList] = useState([]);
+  const [activeTab, setActiveTab] = useState("Pendientes");
 
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // guardamos la categoría en minúsculas para comparar con getCatKey
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(null);
   const [kidsFilter, setKidsFilter] = useState(false);
   const [petFilter, setPetFilter] = useState(false);
 
   const [error, setError] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // 👇 aquí añadimos Dashboard a las pestañas
+  // 👇 añadimos Dashboard como primera pestaña
   const tabs = ["Dashboard", "Todos los Sitios", "Pendientes", "Usuarios"];
 
-  // helper para aplicar filtros sobre la lista completa
-  const applyFilters = (baseList) => {
-    let list = [...baseList];
-
-    // texto de búsqueda (nombre o categoría)
-    if (search.trim()) {
-      const term = search.trim().toLowerCase();
-      list = list.filter((s) => {
-        const name = (s.nombre || s.name || "").toLowerCase();
-        const cat = (s.categoria || s.category || "").toLowerCase();
-        return name.includes(term) || cat.includes(term);
-      });
-    }
-
-    // filtro por categoría
-    if (categoryFilter) {
-      list = list.filter((s) => {
-        const catKey = getCatKey(s);
-        const filterKey = categoryFilter.toLowerCase();
-
-        if (filterKey === "sitios turisticos") {
-          // aceptamos ambas variaciones
-          return (
-            catKey === "sitios turisticos" || catKey === "sitios turísticos"
-          );
-        }
-
-        return catKey === filterKey;
-      });
-    }
-
-    // filtros booleanos
-    if (kidsFilter) {
-      list = list.filter((s) => s.kids_friendly === true);
-    }
-    if (petFilter) {
-      list = list.filter((s) => s.pet_friendly === true);
-    }
-
-    // en AdminSites queremos mostrar solo NO pendientes
-    list = list.filter((s) => s.state !== "Pendiente");
-
-    return list;
-  };
-
-  // ======================
-  // LOAD ALL (usando /sites/pendientes como master)
-  // ======================
-  async function loadSites() {
+  // Carga SOLO sitios pendientes
+  async function loadPendingSites() {
     try {
       setError(null);
 
       const token = localStorage.getItem("token");
       if (!token) {
         setError("No hay token. Inicia sesión como administrador.");
-        setAllSites([]);
         setSiteList([]);
         setPendingCount(0);
         return;
@@ -469,7 +407,6 @@ const AdminSites = () => {
 
       if (!isAdmin) {
         setError("No tienes permisos de administrador.");
-        setAllSites([]);
         setSiteList([]);
         setPendingCount(0);
         return;
@@ -485,37 +422,51 @@ const AdminSites = () => {
 
       const onlyPending = list.filter((s) => s.state === "Pendiente");
 
-      setAllSites(list);
+      setSiteList(onlyPending);
       setPendingCount(onlyPending.length);
-
-      // aplicar filtros actuales sobre la nueva lista
-      const filtered = applyFilters(list);
-      setSiteList(filtered);
     } catch (error) {
-      console.error("Error cargando sitios:", error);
-      setError("Error al cargar los sitios.");
-      setAllSites([]);
+      console.error("Error cargando sitios pendientes:", error);
+      setError("Error al cargar los sitios pendientes.");
       setSiteList([]);
       setPendingCount(0);
     }
   }
 
-  // ======================
-  // SEARCH (ahora solo filtra en el front)
-  // ======================
-  function searchSites() {
-    const filtered = applyFilters(allSites);
-    setSiteList(filtered);
-    setShowFilters(false);
+  // SEARCH solo sobre pendientes
+  async function searchPendingSites() {
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.append("q", search.trim());
+      if (categoryFilter) params.append("categoria", categoryFilter);
+      if (kidsFilter) params.append("kids_friendly", "true");
+      if (petFilter) params.append("pet_friendly", "true");
+
+      const endpoint =
+        params.toString().length > 0
+          ? `/sites/pendientes?${params.toString()}`
+          : "/sites/pendientes";
+
+      const res = await apiService.get(endpoint);
+      const data = res.data || res;
+
+      let list = Array.isArray(data) ? data : data.data || [];
+
+      const onlyPending = list.filter((s) => s.state === "Pendiente");
+      setSiteList(onlyPending);
+      setPendingCount(onlyPending.length);
+    } catch (error) {
+      console.error("Error buscando sitios pendientes:", error);
+      setError("Error al buscar sitios pendientes.");
+    } finally {
+      setShowFilters(false);
+    }
   }
 
-  // ======================
   // APPROVE / REJECT
-  // ======================
   async function aprobarSitio(id) {
     try {
       await apiService.put(`/sites/${id}/state`, { state: "Aprobada" });
-      loadSites();
+      loadPendingSites();
     } catch (e) {
       console.error("Error aprobando sitio:", e);
     }
@@ -524,16 +475,21 @@ const AdminSites = () => {
   async function rechazarSitio(id) {
     try {
       await apiService.put(`/sites/${id}/state`, { state: "Rechazada" });
-      loadSites();
+      loadPendingSites();
     } catch (e) {
       console.error("Error rechazando sitio:", e);
     }
   }
 
   useEffect(() => {
-    // 👇 nueva ruta para Dashboard
+    // 👇 nueva navegación al dashboard
     if (activeTab === "Dashboard") {
       navigate("/admin/panelview");
+      return;
+    }
+
+    if (activeTab === "Todos los Sitios") {
+      navigate("/admin/sites");
       return;
     }
 
@@ -542,13 +498,8 @@ const AdminSites = () => {
       return;
     }
 
-    if (activeTab === "Pendientes") {
-      navigate("/admin/Sitesval");
-      return;
-    }
-
-    // Solo "Todos los Sitios" carga aquí
-    loadSites();
+    // Si estamos en "Pendientes", cargamos la lista
+    loadPendingSites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -571,7 +522,7 @@ const AdminSites = () => {
               </Tab>
             ))}
           </TabsRow>
-          <SectionTitle>Gestión de Sitios (Administrador)</SectionTitle>
+          <SectionTitle>Revisión de Sitios Pendientes</SectionTitle>
         </HeaderWrapper>
 
         <Toolbar>
@@ -586,10 +537,7 @@ const AdminSites = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    searchSites();
-                  }
+                  if (e.key === "Enter") searchPendingSites();
                 }}
               />
               <SearchIcon>🔍</SearchIcon>
@@ -600,34 +548,32 @@ const AdminSites = () => {
             <FiltersPanel>
               <FiltersList>
                 <FilterItem
-                  active={categoryFilter === "comida y bebida"}
-                  onClick={() => setCategoryFilter("comida y bebida")}
+                  active={categoryFilter === "Comida y bebida"}
+                  onClick={() => setCategoryFilter("Comida y bebida")}
                 >
                   <FilterIcon>🍽️</FilterIcon>
                   <span>Comida y bebida</span>
                 </FilterItem>
 
                 <FilterItem
-                  active={categoryFilter === "compras"}
-                  onClick={() => setCategoryFilter("compras")}
+                  active={categoryFilter === "Compras"}
+                  onClick={() => setCategoryFilter("Compras")}
                 >
                   <FilterIcon>🛒</FilterIcon>
                   <span>Compras</span>
                 </FilterItem>
 
                 <FilterItem
-                  active={categoryFilter === "hoteles y alojamiento"}
-                  onClick={() =>
-                    setCategoryFilter("hoteles y alojamiento")
-                  }
+                  active={categoryFilter === "Hoteles y alojamiento"}
+                  onClick={() => setCategoryFilter("Hoteles y alojamiento")}
                 >
                   <FilterIcon>🏨</FilterIcon>
                   <span>Hoteles y alojamiento</span>
                 </FilterItem>
 
                 <FilterItem
-                  active={categoryFilter === "sitios turisticos"}
-                  onClick={() => setCategoryFilter("sitios turisticos")}
+                  active={categoryFilter === "Sitios Turisticos"}
+                  onClick={() => setCategoryFilter("Sitios Turisticos")}
                 >
                   <FilterIcon>🌳</FilterIcon>
                   <span>Sitios Turisticos</span>
@@ -651,21 +597,16 @@ const AdminSites = () => {
               </FiltersList>
 
               <FiltersActions>
-                <FiltersButton variant="primary" onClick={searchSites}>
+                <FiltersButton variant="primary" onClick={searchPendingSites}>
                   Buscar
                 </FiltersButton>
                 <FiltersButton
                   onClick={() => {
-                    setCategoryFilter("");
+                    setCategoryFilter(null);
                     setKidsFilter(false);
                     setPetFilter(false);
                     setSearch("");
-                    // restaurar lista base sin filtros
-                    const base = allSites.filter(
-                      (s) => s.state !== "Pendiente"
-                    );
-                    setSiteList(base);
-                    setShowFilters(false);
+                    loadPendingSites();
                   }}
                 >
                   Restablecer
@@ -676,23 +617,15 @@ const AdminSites = () => {
         </Toolbar>
 
         {error && <MessageBox>{error}</MessageBox>}
+        {!error && siteList.length === 0 && (
+          <MessageBox>No hay sitios pendientes por revisar 🎉</MessageBox>
+        )}
 
         <SitesGridWrapper>
           <SitesGrid>
             {siteList
               .slice()
               .sort((a, b) => {
-                // primero: estado (Aprobada antes que Rechazada)
-                const stateOrder = (s) => {
-                  if (s.state === "Aprobada") return 0;
-                  if (s.state === "Rechazada") return 1;
-                  return 2;
-                };
-                const sA = stateOrder(a);
-                const sB = stateOrder(b);
-                if (sA !== sB) return sA - sB;
-
-                // luego categoría
                 const catA = getCatKey(a);
                 const catB = getCatKey(b);
 
@@ -705,7 +638,6 @@ const AdminSites = () => {
                   if (idxA !== idxB) return idxA - idxB;
                 }
 
-                // luego subcategoría y nombre
                 const subA = (a.subcategorias || a.subcategoria || "")
                   .toString()
                   .toLowerCase();
@@ -739,7 +671,6 @@ const AdminSites = () => {
                   <SiteCard
                     key={id}
                     $catKey={catKey}
-                    $state={site.state}
                     onClick={() =>
                       navigate(`/sites/${id}`, { state: { fromAdmin: true } })
                     }
@@ -766,32 +697,26 @@ const AdminSites = () => {
                     </SiteInfo>
 
                     <SiteActions>
-                      {/* aquí en teoría ya no llegan Pendientes, 
-                          pero dejamos la lógica por si acaso */}
-                      {site.state === "Pendiente" && (
-                        <>
-                          <RoundIconButton
-                            variant="approve"
-                            title="Aprobar sitio"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              aprobarSitio(id);
-                            }}
-                          >
-                            ✓
-                          </RoundIconButton>
-                          <RoundIconButton
-                            variant="delete"
-                            title="Rechazar sitio"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rechazarSitio(id);
-                            }}
-                          >
-                            ✕
-                          </RoundIconButton>
-                        </>
-                      )}
+                      <RoundIconButton
+                        variant="approve"
+                        title="Aprobar sitio"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          aprobarSitio(id);
+                        }}
+                      >
+                        ✓
+                      </RoundIconButton>
+                      <RoundIconButton
+                        variant="delete"
+                        title="Rechazar sitio"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          rechazarSitio(id);
+                        }}
+                      >
+                        ✕
+                      </RoundIconButton>
                     </SiteActions>
                   </SiteCard>
                 );
@@ -803,4 +728,4 @@ const AdminSites = () => {
   );
 };
 
-export default AdminSites;
+export default SitesVal;

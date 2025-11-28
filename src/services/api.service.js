@@ -1,5 +1,5 @@
 // Servicio genérico para hacer peticiones HTTP al backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.15:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://158.69.60.80/api';
 
 class ApiService {
   /**
@@ -117,6 +117,50 @@ class ApiService {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  /**
+   * Método PUT con FormData (para archivos)
+   */
+  async putFormData(endpoint, formData) {
+    const url = `${API_URL}${endpoint}`;
+
+    const config = {
+      method: 'PUT',
+      body: formData,
+    };
+
+    // Si hay token, agregarlo
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers = {
+        Authorization: `Bearer ${token}`,
+      };
+    }
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage =
+          errorData.error ||
+          errorData.message ||
+          errorData.msg ||
+          'Error en la petición';
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error en petición a ${endpoint}:`, error);
+
+      if (error.message && error.message !== 'Failed to fetch') {
+        throw error;
+      }
+
+      throw new Error('Error de conexión. Verifica que el backend esté activo.');
+    }
   }
 
   /**
