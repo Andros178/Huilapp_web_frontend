@@ -8,15 +8,15 @@ import Footer from "../../components/Footer";
 
 import imgHero from '../../assets/Desierto.png';
 import imgCicla from '../../assets/explore.png';
-import imgTatacoa from '../../assets/sitios/Tatacoa.png';
-import imgAgustin from '../../assets/sitios/Agustin.jpg';
-import imgNevado from '../../assets/sitios/Nevado.jpg';
-import imgBetania from '../../assets/sitios/Betania.jpg';
-import imgGuacharo from '../../assets/sitios/Guacharo.jpg';
-import imgPitalito from '../../assets/sitios/Pitalito.jpg';
-import imgBambuco from '../../assets/eventos/Bambuco.JPG';
-import imgJagua from '../../assets/eventos/Jagua.jpeg';
-import imgJunero from '../../assets/eventos/Junero.jpg';
+import imgTatacoa from '../../assets/Tatacoa.png';
+import imgAgustin from '../../assets/Agustin.jpg';
+import imgNevado from '../../assets/Nevado.jpg';
+import imgBetania from '../../assets/Betania.jpg';
+import imgGuacharo from '../../assets/Guacharo.jpg';
+import imgPitalito from '../../assets/Pitalito.jpg';
+import imgBambuco from '../../assets/Bambuco.JPG';
+import imgJagua from '../../assets/Jagua.jpeg';
+import imgJunero from '../../assets/Junero.jpg';
 
 const Home = () => {
   const navigate = useNavigate();
