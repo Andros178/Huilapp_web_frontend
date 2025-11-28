@@ -19,6 +19,7 @@ import imgPitalito from '../assets/Pitalito.jpg';
 import imgBambuco from '../assets/Bambuco.JPG';
 import imgJagua from '../assets/Jagua.jpeg';
 import imgJunero from '../assets/Junero.jpg';
+import desiertoTatacoa from '../assets/desiertoTatacoa.png';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -359,7 +360,7 @@ const ServiceCardTitle = styled.h4`
 
 const CTASection = styled.section`
   background-color: #1a1a1a;
-  background-image: url("src/assets/desiertoTatacoa.png?height=400&width=1200");
+  background-image: url(${desiertoTatacoa});
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
