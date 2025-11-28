@@ -578,12 +578,14 @@ const DestinoName = styled.h3`
   @media (max-width: 768px) {
     font-size: 16px;
   }
-                <img
-                  src={huilaVideo}
-                  alt="Huila Video"
-                  loading="lazy"
-                />
+`;
+
+const DestinoLugar = styled.p`
+  margin: 0;
+  display: flex;
   align-items: center;
+  gap: 8px;
+  color: #ffffff;
   font-size: 14px;
   @media (max-width: 768px) {
     font-size: 12px;
