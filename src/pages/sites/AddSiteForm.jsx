@@ -18,6 +18,8 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
   const [petFriendly, setPetFriendly] = useState(false);
   const [kidsFriendly, setKidsFriendly] = useState(false);
   const [file, setFile] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
@@ -84,20 +86,23 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    const errs = {};
+    if (!nombre.trim()) errs.nombre = true;
+    if (!categoria) errs.categoria = true;
+    if (!subcat) errs.subcat = true;
+    if (!lat) errs.lat = true;
+    if (!lng) errs.lng = true;
+    if (!direccion) errs.direccion = true;
+    if (!telefono) errs.telefono = true;
+    if (!file) errs.file = true;
 
-    if (
-      !nombre.trim() ||
-      !categoria ||
-      !subcat ||
-      !lat ||
-      !lng ||
-      !direccion ||
-      !telefono
-    ) {
+    if (Object.keys(errs).length) {
+      setFieldErrors(errs);
       setError("Completa los campos requeridos");
       return;
     }
 
+    setFieldErrors({});
     setLoading(true);
     try {
       const form = new FormData();
@@ -116,7 +121,8 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
       // El backend crea el sitio (normalmente con state = "Pendiente")
       await apiService.postFormData("/sites", form);
 
-      if (onSuccess) onSuccess();
+      // show pending modal before calling onSuccess
+      setSuccessModalVisible(true);
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -128,11 +134,16 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
     <Form onSubmit={onSubmit}>
       {error && <ErrorBox>{error}</ErrorBox>}
 
-      <Label>Nombre*</Label>
-      <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      <Label>
+        Nombre<Req>*</Req>
+      </Label>
+      <Input hasError={fieldErrors.nombre} value={nombre} onChange={(e) => setNombre(e.target.value)} />
 
-      <Label>Categoría*</Label>
+      <Label>
+        Categoría<Req>*</Req>
+      </Label>
       <Select
+        hasError={fieldErrors.categoria}
         value={categoria}
         onChange={(e) => {
           setCategoria(e.target.value);
@@ -147,8 +158,10 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
         ))}
       </Select>
 
-      <Label>Subcategoría*</Label>
-      <Select value={subcat} onChange={(e) => setSubcat(e.target.value)}>
+      <Label>
+        Subcategoría<Req>*</Req>
+      </Label>
+      <Select hasError={fieldErrors.subcat} value={subcat} onChange={(e) => setSubcat(e.target.value)}>
         <option value="">Selecciona</option>
         {categoria &&
           (
@@ -165,38 +178,24 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
       <MapPicker>
         <Label>Selecciona ubicación</Label>
         <SmallMap ref={mapRef} />
-        <CoordsRow>
-          <div>
-            <Label>Latitud*</Label>
-            <SmallInput
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              placeholder="Latitud"
-            />
-          </div>
-          <div>
-            <Label>Longitud*</Label>
-            <SmallInput
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              placeholder="Longitud"
-            />
-          </div>
-        </CoordsRow>
+        {/* ocultamos los inputs de lat/lng, pero los mantenemos en el formulario como hidden */}
+        <input type="hidden" name="latitud" value={lat} />
+        <input type="hidden" name="longitud" value={lng} />
         <HelpText>
           Arrastra el marcador o haz clic en el mapa para seleccionar la
           ubicación.
         </HelpText>
       </MapPicker>
 
-      <Label>Dirección*</Label>
-      <Input
-        value={direccion}
-        onChange={(e) => setDireccion(e.target.value)}
-      />
+      <Label>
+        Dirección<Req>*</Req>
+      </Label>
+      <Input hasError={fieldErrors.direccion} value={direccion} onChange={(e) => setDireccion(e.target.value)} />
 
-      <Label>Teléfono*</Label>
-      <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+      <Label>
+        Teléfono<Req>*</Req>
+      </Label>
+      <Input hasError={fieldErrors.telefono} value={telefono} onChange={(e) => setTelefono(e.target.value)} />
 
       <Label>Descripción</Label>
       <TextArea
@@ -205,30 +204,27 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
       />
 
       <FileRow>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
+          <Label>
+            Imagen<Req>*</Req>
+          </Label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
+          {fieldErrors.file && <FileError>La imagen es obligatoria</FileError>}
       </FileRow>
 
       <CheckboxRow>
-        <label>
-          <input
-            type="checkbox"
-            checked={petFriendly}
-            onChange={(e) => setPetFriendly(e.target.checked)}
-          />{" "}
-          Apto para mascotas
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={kidsFriendly}
-            onChange={(e) => setKidsFriendly(e.target.checked)}
-          />{" "}
-          Apto para niños
-        </label>
+        <ToggleBtn active={petFriendly} onClick={() => setPetFriendly(p => !p)} aria-pressed={petFriendly} type="button">
+          <IconSpan>🐾</IconSpan>
+          <div>Apto para mascotas</div>
+        </ToggleBtn>
+
+        <ToggleBtn active={kidsFriendly} onClick={() => setKidsFriendly(k => !k)} aria-pressed={kidsFriendly} type="button">
+          <IconSpan>🧒</IconSpan>
+          <div>Apto para niños</div>
+        </ToggleBtn>
       </CheckboxRow>
 
       <Actions>
@@ -243,6 +239,17 @@ export default function AddSiteForm({ onSuccess, onCancel, isAdmin = false }) {
           {loading ? "Enviando..." : "Publicar"}
         </button>
       </Actions>
+      {successModalVisible && (
+        <ModalOverlay onClick={() => { setSuccessModalVisible(false); if (onSuccess) onSuccess(); }}>
+          <ModalCard onClick={(e) => e.stopPropagation()}>
+            <h3>Registro pendiente</h3>
+            <p>Tu sitio ha sido enviado y se encuentra en estado <strong>pendiente de aprobación</strong>. Te notificaremos cuando sea revisado.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
+              <button onClick={() => { setSuccessModalVisible(false); if (onSuccess) onSuccess(); }}>Aceptar</button>
+            </div>
+          </ModalCard>
+        </ModalOverlay>
+      )}
     </Form>
   );
 }
@@ -253,31 +260,66 @@ const Label = styled.div`
   margin-top: 12px;
 `;
 const Input = styled.input`
-  width: 100%;
+  width: 95%;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #e6e6e6;
-`;
+  border: ${p => (p.hasError ? '2px solid #e05555' : '1px solid #e6e6e6')};
+  &:focus {
+    outline: none;
+    border: 2px solid #008073;
+  }
+`;  
 const Select = styled.select`
   width: 100%;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #e6e6e6;
+  border: ${p => (p.hasError ? '2px solid #e05555' : '1px solid #e6e6e6')};
+  &:focus {
+    outline: none;
+    border: 2px solid #008073;
+  }
 `;
 const TextArea = styled.textarea`
-  width: 100%;
+  width: 95%;
   min-height: 120px;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #e6e6e6;
+  border: ${p => (p.hasError ? '2px solid #e05555' : '1px solid #e6e6e6')};
+  &:focus {
+    outline: none;
+    border: 2px solid #008073;
+  }
 `;
 const FileRow = styled.div`
   margin-top: 12px;
 `;
 const CheckboxRow = styled.div`
   display: flex;
-  gap: 18px;
+  gap: 12px;
   margin-top: 12px;
+`;
+const ToggleBtn = styled.button`
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  border: 1px solid ${p => p.active ? '#0b9f88' : '#e6e6e6'};
+  background: ${p => p.active ? 'linear-gradient(90deg,#0bb39f,#0b9f88)' : '#fff'};
+  color: ${p => p.active ? '#fff' : '#333'};
+  cursor:pointer;
+  font-weight:600;
+  min-width: 160px;
+`;
+const IconSpan = styled.span`
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:14px;
+  background: ${p => p.active ? 'rgba(255,255,255,0.12)' : 'transparent'};
+  font-size:16px;
 `;
 const Actions = styled.div`
   display: flex;
@@ -329,7 +371,41 @@ const SmallInput = styled.input`
   width: 100%;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #e6e6e6;
+  border: ${p => (p.hasError ? '2px solid #e05555' : '1px solid #e6e6e6')};
+  &:focus {
+    outline: none;
+    border: 2px solid #008073;
+  }
+`;
+const Req = styled.span`
+  color: #e05555;
+  margin-left: 6px;
+`;
+const FileError = styled.div`
+  color: #e05555;
+  font-size: 13px;
+  margin-top: 6px;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 9999;
+`;
+
+const ModalCard = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  width: 420px;
+  max-width: 94%;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  p { color: #333 }
+  button { background: #0b9f88; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer }
 `;
 const HelpText = styled.div`
   font-size: 12px;

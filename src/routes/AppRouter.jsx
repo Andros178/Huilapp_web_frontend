@@ -21,7 +21,7 @@ import Profile from "../pages/profile/Profile";
 import AdminSites from "../pages/admin/AdminSites";
 import Users from "../pages/admin/User";
 import SitesVal from "../pages/admin/Sitesval"
-import PanelView from "../pages/admin/panelview";
+import PanelView from "../pages/admin/PanelView";
 import Help from "../pages/profile/Help";
 import Terms from "../pages/profile/Terms";
 import Security from "../pages/profile/Security";
