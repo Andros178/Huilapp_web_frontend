@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import huilappImagotipo from '../assets/huilappImagotipo.png';
 import { MapPin, Mail, Phone, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 
 // Styled Components
@@ -173,7 +174,7 @@ export default function Footer() {
         <FooterSection>
           <MapSection>
             <MapImage
-              src="src\assets\huilappImagotipo.png?height=100&width=150"
+              src={huilappImagotipo}
               alt="Mapa del Huila"
               loading="lazy"
             />

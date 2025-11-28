@@ -19,6 +19,9 @@ import imgPitalito from '../assets/Pitalito.jpg';
 import imgBambuco from '../assets/Bambuco.JPG';
 import imgJagua from '../assets/Jagua.jpeg';
 import imgJunero from '../assets/Junero.jpg';
+import heroSection from '../assets/heroSection.png';
+import appScreenshots from '../assets/appScreenshots.png';
+import huilaVideo from '../assets/huilaVideo.jpg';
 import desiertoTatacoa from '../assets/desiertoTatacoa.png';
 
 // Styled Components
@@ -575,11 +578,11 @@ const DestinoName = styled.h3`
   @media (max-width: 768px) {
     font-size: 16px;
   }
-`;
-
-const DestinoLugar = styled.div`
-  display: flex;
-  gap: 6px;
+                <img
+                  src={huilaVideo}
+                  alt="Huila Video"
+                  loading="lazy"
+                />
   align-items: center;
   font-size: 14px;
   @media (max-width: 768px) {
@@ -815,11 +818,11 @@ export default function Welcome() {
                     </PrimaryButton>
                 </HeroContent>
                 <HeroImage>
-                    <img
-                        src="src\assets\heroSection.png?height=300&width=300"
-                        alt="Desierto de Tatacoa"
-                        loading="lazy"
-                    />
+                  <img
+                    src={heroSection}
+                    alt="Desierto de Tatacoa"
+                    loading="lazy"
+                  />
                 </HeroImage>
             </HeroSection>
 
@@ -844,11 +847,11 @@ export default function Welcome() {
                         </PlayStoreButton>
                     </PromotionContent>
                     <PromotionImage>
-                        <img
-                            src="src\assets\appScreenshots.png?height=400&width=250"
-                            alt="App Screenshots"
-                            loading="lazy"
-                        />
+                      <img
+                        src={appScreenshots}
+                        alt="App Screenshots"
+                        loading="lazy"
+                      />
                     </PromotionImage>
                 </PromotionContainer>
             </AppPromotionSection>
@@ -905,9 +908,9 @@ export default function Welcome() {
                 <VideoContainer>
                     <VideoPlaceholder>
                         <img
-                            src="src\assets\huilaVideo.jpg?height=400&width=600"
-                            alt="Huila Video"
-                            loading="lazy"
+                          src={huilaVideo}
+                          alt="Huila Video"
+                          loading="lazy"
                         />
                         <PlayButton>
                             <Play size={40} color="#ffffff" fill="#ffffff" />
