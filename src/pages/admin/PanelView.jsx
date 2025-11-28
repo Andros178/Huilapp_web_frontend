@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import apiService from "../../services/api.service";
 
 // 🔹 Imágenes de las tarjetas
-import pendientesImg from "../../assets/images/pendientes.png";
-import sitiosImg from "../../assets/images/sitios.png";
-import usuariosImg from "../../assets/images/usuarios.png";
+import pendientesImg from "../../assets/pendientes.png";
+import sitiosImg from "../../assets/sitios.png";
+import usuariosImg from "../../assets/usuarios.png";
 
 const PRIMARY = "#008073";
 

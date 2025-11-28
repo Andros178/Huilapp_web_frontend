@@ -6,17 +6,17 @@ import { FaMapPin as MapPin, FaCompass as Compass } from "react-icons/fa";
 import { MdCamera as Camera, MdStar as Star } from "react-icons/md";
 import Footer from "../../components/Footer";
 
-import imgHero from '../../assets/images/Desierto.png';
-import imgCicla from '../../assets/images/explore.png';
-import imgTatacoa from '../../assets/images/sitios/Tatacoa.png';
-import imgAgustin from '../../assets/images/sitios/Agustin.jpg';
-import imgNevado from '../../assets/images/sitios/Nevado.jpg';
-import imgBetania from '../../assets/images/sitios/Betania.jpg';
-import imgGuacharo from '../../assets/images/sitios/Guacharo.jpg';
-import imgPitalito from '../../assets/images/sitios/Pitalito.jpg';
-import imgBambuco from '../../assets/images/eventos/Bambuco.JPG';
-import imgJagua from '../../assets/images/eventos/Jagua.jpeg';
-import imgJunero from '../../assets/images/eventos/Junero.jpg';
+import imgHero from '../../assets/Desierto.png';
+import imgCicla from '../../assets/explore.png';
+import imgTatacoa from '../../assets/sitios/Tatacoa.png';
+import imgAgustin from '../../assets/sitios/Agustin.jpg';
+import imgNevado from '../../assets/sitios/Nevado.jpg';
+import imgBetania from '../../assets/sitios/Betania.jpg';
+import imgGuacharo from '../../assets/sitios/Guacharo.jpg';
+import imgPitalito from '../../assets/sitios/Pitalito.jpg';
+import imgBambuco from '../../assets/eventos/Bambuco.JPG';
+import imgJagua from '../../assets/eventos/Jagua.jpeg';
+import imgJunero from '../../assets/eventos/Junero.jpg';
 
 const Home = () => {
   const navigate = useNavigate();

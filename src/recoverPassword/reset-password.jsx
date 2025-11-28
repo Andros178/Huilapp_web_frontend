@@ -226,7 +226,7 @@ const SubmitButton = styled.button`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/images/mitad.png') center / contain no-repeat;
+  background: url('/src/assets/mitad.png') center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {
