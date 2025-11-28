@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import styled from 'styled-components';
 import Footer from '../../components/Footer';
+import ImgMitad from '../../assets/mitad.png';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -270,7 +271,7 @@ const SignupPrompt = styled.div`
 
 const ImageSection = styled.div`
   flex: 0 0 60%;
-  background: url('/src/assets/mitad.png') center / contain no-repeat;
+  background: url(${ImgMitad}) center / contain no-repeat;
   height: 100%;
 
   @media (max-width: 1024px) {
