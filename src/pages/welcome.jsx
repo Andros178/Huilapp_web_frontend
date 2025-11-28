@@ -359,7 +359,7 @@ const ServiceCardTitle = styled.h4`
 
 const CTASection = styled.section`
   background-color: #1a1a1a;
-  background-image: url("src/assets/desierto_tatacoa.png?height=400&width=1200");
+  background-image: url("src/assets/desiertoTatacoa.png?height=400&width=1200");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -815,7 +815,7 @@ export default function Welcome() {
                 </HeroContent>
                 <HeroImage>
                     <img
-                        src="src\assets\hero_section.png?height=300&width=300"
+                        src="src\assets\heroSection.png?height=300&width=300"
                         alt="Desierto de Tatacoa"
                         loading="lazy"
                     />
@@ -844,7 +844,7 @@ export default function Welcome() {
                     </PromotionContent>
                     <PromotionImage>
                         <img
-                            src="src\assets\app_screenshots.png?height=400&width=250"
+                            src="src\assets\appScreenshots.png?height=400&width=250"
                             alt="App Screenshots"
                             loading="lazy"
                         />
@@ -904,7 +904,7 @@ export default function Welcome() {
                 <VideoContainer>
                     <VideoPlaceholder>
                         <img
-                            src="src\assets\huila_video.jpg?height=400&width=600"
+                            src="src\assets\huilaVideo.jpg?height=400&width=600"
                             alt="Huila Video"
                             loading="lazy"
                         />
