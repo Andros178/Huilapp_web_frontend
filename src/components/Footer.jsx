@@ -173,7 +173,7 @@ export default function Footer() {
         <FooterSection>
           <MapSection>
             <MapImage
-              src="src\assets\images\huilapp_imagotipo.png?height=100&width=150"
+              src="src\assets\huilapp_imagotipo.png?height=100&width=150"
               alt="Mapa del Huila"
               loading="lazy"
             />

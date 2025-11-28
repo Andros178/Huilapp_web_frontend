@@ -10,15 +10,15 @@ import { MdStar as Star } from "react-icons/md";
 import styled from "styled-components";
 import Footer from "../components/Footer";
 
-import imgTatacoa from '../assets/images/sitios/Tatacoa.png';
-import imgAgustin from '../assets/images/sitios/Agustin.jpg';
-import imgNevado from '../assets/images/sitios/Nevado.jpg';
-import imgBetania from '../assets/images/sitios/Betania.jpg';
-import imgGuacharo from '../assets/images/sitios/Guacharo.jpg';
-import imgPitalito from '../assets/images/sitios/Pitalito.jpg';
-import imgBambuco from '../assets/images/eventos/Bambuco.JPG';
-import imgJagua from '../assets/images/eventos/Jagua.jpeg';
-import imgJunero from '../assets/images/eventos/Junero.jpg';
+import imgTatacoa from '../assets/sitios/Tatacoa.png';
+import imgAgustin from '../assets/sitios/Agustin.jpg';
+import imgNevado from '../assets/sitios/Nevado.jpg';
+import imgBetania from '../assets/sitios/Betania.jpg';
+import imgGuacharo from '../assets/sitios/Guacharo.jpg';
+import imgPitalito from '../assets/sitios/Pitalito.jpg';
+import imgBambuco from '../assets/eventos/Bambuco.JPG';
+import imgJagua from '../assets/eventos/Jagua.jpeg';
+import imgJunero from '../assets/eventos/Junero.jpg';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -359,7 +359,7 @@ const ServiceCardTitle = styled.h4`
 
 const CTASection = styled.section`
   background-color: #1a1a1a;
-  background-image: url("src/assets/images/desierto_tatacoa.png?height=400&width=1200");
+  background-image: url("src/assets/desierto_tatacoa.png?height=400&width=1200");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -815,7 +815,7 @@ export default function Welcome() {
                 </HeroContent>
                 <HeroImage>
                     <img
-                        src="src\assets\images\hero_section.png?height=300&width=300"
+                        src="src\assets\hero_section.png?height=300&width=300"
                         alt="Desierto de Tatacoa"
                         loading="lazy"
                     />
@@ -844,7 +844,7 @@ export default function Welcome() {
                     </PromotionContent>
                     <PromotionImage>
                         <img
-                            src="src\assets\images\app_screenshots.png?height=400&width=250"
+                            src="src\assets\app_screenshots.png?height=400&width=250"
                             alt="App Screenshots"
                             loading="lazy"
                         />
@@ -904,7 +904,7 @@ export default function Welcome() {
                 <VideoContainer>
                     <VideoPlaceholder>
                         <img
-                            src="src\assets\images\huila_video.jpg?height=400&width=600"
+                            src="src\assets\huila_video.jpg?height=400&width=600"
                             alt="Huila Video"
                             loading="lazy"
                         />
